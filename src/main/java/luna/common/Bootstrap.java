@@ -129,10 +129,10 @@ public class Bootstrap extends AbstractLifeCycle{
 
         }
         logger.info("MysqlContext has inited!");
-        logger.info("Target table meta: "+mysqlContext.getTableMetas());
-        logger.info("Source tables: "+mysqlContext.getSourceTables());
-        logger.info("Target datasource: "+mysqlContext.getTargetDs());
-        logger.info("Source datasource: "+mysqlContext.getSourceDs());
+//        logger.info("Target table meta: "+mysqlContext.getTableMetas());
+//        logger.info("Source tables: "+mysqlContext.getSourceTables());
+//        logger.info("Target datasource: "+mysqlContext.getTargetDs());
+//        logger.info("Source datasource: "+mysqlContext.getSourceDs());
     }
 
     private DataSource initDataSource(String url, String username, String password, String encode, String poolSize, String driver){
