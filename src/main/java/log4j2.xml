@@ -33,20 +33,20 @@
 		</RollingFile>
 	</Appenders>
 	<Loggers>
-		<Logger name="time" level="info" additivity="false">
-			<appender-ref ref="Console" />
-			<AppenderRef ref="Time" />
-		</Logger>
-		<Logger name="luna" level="trace" additivity="false">
-			<appender-ref ref="Console" />
-			<AppenderRef ref="Luna" />
-		</Logger>
+        <Logger name="time" level="info" additivity="false">
+            <appender-ref ref="Console" />
+            <AppenderRef ref="Time" />
+        </Logger>
+        <Logger name="luna" level="trace" additivity="false">
+            <appender-ref ref="Console" />
+            <AppenderRef ref="Luna" />
+        </Logger>
         <Logger name="ding" level="trace" additivity="false">
             <appender-ref ref="Console" />
             <AppenderRef ref="DingDing" />
         </Logger>
-		<Root level="INFO">
-			<AppenderRef ref="Console" />
-		</Root>
+        <Root level="INFO">
+            <AppenderRef ref="Console" />
+        </Root>
 	</Loggers>
 </Configuration>
