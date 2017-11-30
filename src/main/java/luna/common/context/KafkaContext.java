@@ -1,5 +1,7 @@
 package luna.common.context;
 
+import luna.util.StringStyle;
+import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.logging.log4j.Logger;
 
 import java.io.Serializable;
@@ -44,5 +46,9 @@ public class KafkaContext implements Serializable{
 
     public void setProps(Properties props) {
         this.props = props;
+    }
+
+    public String toString(){
+        return ToStringBuilder.reflectionToString(this, StringStyle.DEFAULT_STYLE);
     }
 }

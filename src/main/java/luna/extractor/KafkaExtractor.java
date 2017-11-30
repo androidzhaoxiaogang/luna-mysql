@@ -6,16 +6,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import luna.common.*;
+import luna.common.context.KafkaContext;
+import luna.translator.KafkaRecordTranslator;
+
 import com.google.common.collect.Lists;
 import luna.util.DingDingMsgUtil;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.log4j.BasicConfigurator;
-
-import luna.common.*;
-import luna.common.context.KafkaContext;
-import luna.translator.KafkaRecordTranslator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONValue;
