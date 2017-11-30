@@ -102,9 +102,9 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                     records = consumer.poll(Long.MAX_VALUE);
                     for (ConsumerRecord<String, String> consumerRecord : records) {
                         try {
-                            logger.info(consumerRecord);
-                            Map<String, Object> payload = (Map<String, Object>) JSONValue.parseWithException(consumerRecord.value());
-                            kafkaRecordTranslator.translate(payload);
+//                            logger.info(consumerRecord);
+//                            Map<String, Object> payload = (Map<String, Object>) JSONValue.parseWithException(consumerRecord.value());
+//                            kafkaRecordTranslator.translate(payload);
                             consumer.commitSync();
                         }catch (Throwable e){
                             DingDingMsgUtil.sendMsg(e.getLocalizedMessage());
