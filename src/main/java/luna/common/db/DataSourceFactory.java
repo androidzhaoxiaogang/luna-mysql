@@ -40,14 +40,14 @@ public class DataSourceFactory extends AbstractLifeCycle{
                                         config.getProperties());
                             }
                         });
-        logger.info("DataSourceFactory is started!" );
+        //logger.info("DataSourceFactory is started!" );
     }
 
 
     public void stop() {
         super.stop();
         dataSources.invalidateAll();
-        logger.info("DataSourceFactory is stopped!");
+        //logger.info("DataSourceFactory is stopped!");
     }
 
     public DataSource getDataSource(DataSourceConfig config) {

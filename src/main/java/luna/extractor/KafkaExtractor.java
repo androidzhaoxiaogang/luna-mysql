@@ -16,6 +16,8 @@ import org.apache.log4j.BasicConfigurator;
 import luna.common.*;
 import luna.common.context.KafkaContext;
 import luna.translator.KafkaRecordTranslator;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONValue;
 
 /**
@@ -35,6 +37,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
     private ExecutorService         executor;
     private List<ConsumerLoop>      consumers = Lists.newArrayList();
     private KafkaRecordTranslator   kafkaRecordTranslator;
+    private Logger                  log  = LogManager.getLogger("kafka");
 
     public KafkaExtractor(KafkaContext kafkaContext, KafkaRecordTranslator kafkaRecordTranslator) {
         this.kafkaContext=kafkaContext;
@@ -51,18 +54,18 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
         super.stop();
         consumers.forEach(consumerThread -> consumerThread.shutdown());
         executor.shutdown();
-        logger.info("All consumer is shutdown!");
+        log.info("All consumer is shutdown!");
         try {
             executor.awaitTermination(5000, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            logger.error(e);
+            log.error(e);
         }
     }
 
     public void extract() {
         executor = Executors.newFixedThreadPool(kafkaContext.getNumConsumers());
         int topicNum = kafkaContext.getTopics().size();
-        logger.info("thread.num: "+kafkaContext.getNumConsumers()+" and topic.num: "+ topicNum);
+        log.info("thread.num: "+kafkaContext.getNumConsumers()+" and topic.num: "+ topicNum);
         HashMap <Integer,ArrayList<String>> consumerTopics = new HashMap<>();
 
         for (int j=0;j<topicNum;j++){
@@ -96,19 +99,19 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
         public void run() {
             try {
                 monitorRebalance();
-                logger.info("Thread-"+Thread.currentThread().getId()+" Get kafka client!");
+                log.info("Thread-"+Thread.currentThread().getId()+" Get kafka client!");
                 ConsumerRecords<String, String> records;
                 while (running.get()) {
                     records = consumer.poll(Long.MAX_VALUE);
                     for (ConsumerRecord<String, String> consumerRecord : records) {
                         try {
-                            logger.info(consumerRecord);
+                            log.info(consumerRecord);
                             Map<String, Object> payload = (Map<String, Object>) JSONValue.parseWithException(consumerRecord.value());
                             kafkaRecordTranslator.translate(payload);
                             consumer.commitSync();
                         }catch (Throwable e){
                             DingDingMsgUtil.sendMsg(e.getLocalizedMessage());
-                            logger.error(e.getLocalizedMessage());
+                            log.error(e.getLocalizedMessage());
                             shutdown();
                         }
                     }
@@ -117,7 +120,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                 // ignore for shutdown
             } finally {
                 consumer.close();
-                logger.info("Consumer Thread "+ Thread.currentThread().getId() + "is closed!");
+                log.info("Consumer Thread "+ Thread.currentThread().getId() + "is closed!");
             }
         }
 
@@ -132,7 +135,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
 
                 public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
                     partitions.forEach(partition -> {
-                        logger.info("Rebalance happened " + partition.topic() + ":" + partition.partition());
+                        log.info("Rebalance happened " + partition.topic() + ":" + partition.partition());
                     });
                 }
             });

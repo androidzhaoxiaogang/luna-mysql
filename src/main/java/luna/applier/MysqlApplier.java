@@ -9,6 +9,8 @@ import luna.common.model.SchemaTable;
 import luna.exception.LunaException;
 
 import com.google.common.collect.MapMaker;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
@@ -24,6 +26,7 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
     private Map<SchemaTable, TableSqlUnit>      deleteSqlCache;
     private MysqlContext                        mysqlContext;
     private MapMaker                            concurrentMapMaker = new MapMaker();
+    private Logger                              log = LogManager.getLogger("mysql");
 
     public MysqlApplier(MysqlContext mysqlContext){
         this.mysqlContext=mysqlContext;
@@ -39,7 +42,7 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
         insertSqlCache = concurrentMapMaker.makeMap();
         updateSqlCache = concurrentMapMaker.makeMap();
         deleteSqlCache = concurrentMapMaker.makeMap();
-        logger.info("MysqlApplier is started!");
+        log.info("MysqlApplier is started!");
     }
 
     public void stop(){
@@ -47,7 +50,7 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
         insertSqlCache.clear();
         updateSqlCache.clear();
         deleteSqlCache.clear();
-        logger.info("MysqlApplier is stopped!");
+        log.info("MysqlApplier is stopped!");
     }
 
     public void apply(Record record){
@@ -79,7 +82,7 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
                 } catch (SQLException e) {
                     throw new SQLException("failed Record Data : " + record.toString(), e);
                 }
-                logger.info("Record: Has applied to mysql!");
+                log.info("Record: Has applied to mysql!");
                 return null;
             }
 
