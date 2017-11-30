@@ -43,7 +43,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
 
     public void start() {
         super.start();
-        System.setProperty("java.security.auth.login.config", "src/conf/kafka_client_jaas.conf");
+        System.setProperty("java.security.auth.login.config", "conf/kafka_client_jaas.conf");
         BasicConfigurator.configure();
     }
 
