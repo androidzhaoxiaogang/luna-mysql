@@ -37,11 +37,12 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
     private ExecutorService         executor;
     private List<ConsumerLoop>      consumers = Lists.newArrayList();
     private KafkaRecordTranslator   kafkaRecordTranslator;
-    private Logger                  log  = LogManager.getLogger("kafka");
+    private Logger                  log;
 
     public KafkaExtractor(KafkaContext kafkaContext, KafkaRecordTranslator kafkaRecordTranslator) {
         this.kafkaContext=kafkaContext;
         this.kafkaRecordTranslator=kafkaRecordTranslator;
+        log = LogManager.getLogger("kafka");
     }
 
     public void start() {
