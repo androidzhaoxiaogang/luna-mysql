@@ -6,7 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public abstract class AbstractLifeCycle implements LifeCycle{
-    protected static final Logger  logger  = LogManager.getLogger("luna");
+    protected final Logger  logger  = LogManager.getLogger("luna");
     private AtomicBoolean   running = new AtomicBoolean(false);
 
     public boolean isStart(){ return running.get();}
