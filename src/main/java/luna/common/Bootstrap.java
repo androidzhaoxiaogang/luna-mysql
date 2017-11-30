@@ -59,7 +59,7 @@ public class Bootstrap extends AbstractLifeCycle{
 
     public void stop(){
         logger.info("Bootstrap is stopped!");
-        kafkaExtractor.stop();
+        //kafkaExtractor.stop();
         kafkaRecordTranslator.stop();
         mysqlApplier.stop();
         dataSourceFactory.stop();
