@@ -43,7 +43,7 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
     }
 
     public void stop(){
-        super.stop();
+        //super.stop();
         insertSqlCache.clear();
         updateSqlCache.clear();
         deleteSqlCache.clear();

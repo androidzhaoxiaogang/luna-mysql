@@ -28,7 +28,7 @@ public class KafkaRecordTranslator extends AbstractLifeCycle implements Translat
     }
 
     public void stop(){
-        super.stop();
+        //super.stop();
         logger.info("KafkaRecordTranslator is stopped!");
     }
 
