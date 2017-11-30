@@ -45,6 +45,7 @@ public class DataSourceFactory extends AbstractLifeCycle{
 
 
     public void stop() {
+        super.stop();
         dataSources.invalidateAll();
         logger.info("DataSourceFactory is stopped!");
     }

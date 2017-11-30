@@ -48,15 +48,15 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
     }
 
     public void stop() {
-        //super.stop();
+        super.stop();
         consumers.forEach(consumerThread -> consumerThread.shutdown());
         executor.shutdown();
         logger.info("All consumer is shutdown!");
-//        try {
-//            executor.awaitTermination(5000, TimeUnit.MILLISECONDS);
-//        } catch (InterruptedException e) {
-//            logger.error(e);
-//        }
+        try {
+            executor.awaitTermination(5000, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            logger.error(e);
+        }
     }
 
     public void extract() {
