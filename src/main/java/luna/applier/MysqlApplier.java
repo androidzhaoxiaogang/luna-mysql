@@ -166,6 +166,7 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
             applierSql = SqlTemplates.getMYSQL().getDeleteSql(record.getSchema(),
                     record.getTable(), primaryKey);
             sqlUnit.applierSql = applierSql;
+            sqlUnit.applierIndex = new HashMap<>();
             sqlUnit.applierIndex.put(record.getPrimaryKey(),1);
             for(String col:record.getcolumnNames()){
                 if(!col.equalsIgnoreCase(record.getPrimaryKey())){

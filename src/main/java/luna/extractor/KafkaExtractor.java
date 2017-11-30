@@ -107,8 +107,8 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                             kafkaRecordTranslator.translate(payload);
                             consumer.commitSync();
                         }catch (Throwable e){
-                            DingDingMsgUtil.sendMsg(e.getMessage());
-                            logger.error(e.getStackTrace());
+                            DingDingMsgUtil.sendMsg(e.getLocalizedMessage());
+                            logger.error(e.getLocalizedMessage());
                             shutdown();
                         }
                     }
