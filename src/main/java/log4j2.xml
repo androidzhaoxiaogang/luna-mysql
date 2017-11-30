@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
-	<Appenders>
-		<Console name="Console" target="SYSTEM_OUT">
-			<PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
-		</Console>
-		<RollingFile name="Mysql" fileName="/data/luna/logs/mysql/mysql.log"
-			filePattern="/data/luna/logs/mysql/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
-			<PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
-			<Policies>
-				<TimeBasedTriggeringPolicy />
-				<SizeBasedTriggeringPolicy size="10MB" />
-			</Policies>
-			<DefaultRolloverStrategy max="20" />
-		</RollingFile>
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
+        </Console>
+        <RollingFile name="Mysql" fileName="/data/luna/logs/mysql/mysql.log"
+                     filePattern="/data/luna/logs/mysql/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="10MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="20" />
+        </RollingFile>
         <RollingFile name="Kafka" fileName="/data/luna/logs/kafka/kafka.log"
                      filePattern="/data/luna/logs/kafka/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
@@ -31,17 +31,17 @@
             </Policies>
             <DefaultRolloverStrategy max="20" />
         </RollingFile>
-		<RollingFile name="Time" fileName="/data/luna/logs/time/time.log"
-			filePattern="/data/luna/logs/time/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
-			<PatternLayout pattern="%msg%n" />
-			<Policies>
-				<TimeBasedTriggeringPolicy />
-				<SizeBasedTriggeringPolicy size="10MB" />
-			</Policies>
-			<DefaultRolloverStrategy max="20" />
-		</RollingFile>
-	</Appenders>
-	<Loggers>
+        <RollingFile name="Time" fileName="/data/luna/logs/time/time.log"
+                     filePattern="/data/luna/logs/time/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
+            <PatternLayout pattern="%msg%n" />
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="10MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="20" />
+        </RollingFile>
+    </Appenders>
+    <Loggers>
         <Logger name="time" level="info" additivity="false">
             <appender-ref ref="Console" />
             <AppenderRef ref="Time" />
@@ -61,5 +61,5 @@
         <Root level="INFO">
             <AppenderRef ref="Console" />
         </Root>
-	</Loggers>
+    </Loggers>
 </Configuration>
