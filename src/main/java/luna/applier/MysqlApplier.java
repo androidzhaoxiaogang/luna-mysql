@@ -79,7 +79,7 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
                 } catch (SQLException e) {
                     throw new SQLException("failed Record Data : " + record.toString(), e);
                 }
-                logger.info("Record:"+record.toString()+": Has applied to mysql!");
+                logger.info("Record: Has applied to mysql!");
                 return null;
             }
 
