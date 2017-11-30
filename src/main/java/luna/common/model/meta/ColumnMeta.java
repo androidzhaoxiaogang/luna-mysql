@@ -1,13 +1,15 @@
-package luna.common.db.meta;
+package luna.common.model.meta;
 
 import luna.util.StringStyle;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
-public class ColumnMeta {
+import java.io.Serializable;
+
+public class ColumnMeta implements Serializable{
+    private static final long serialVersionUID = 2911727340486550457L;
 
     private String name;
-    private int    type;
+    private int    type; //java.sql.Types
 
     public ColumnMeta(String columnName, int columnType){
         this.name = columnName;

@@ -1,12 +1,15 @@
-package luna.common.db.meta;
+package luna.common.model.meta;
 
 import luna.util.StringStyle;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TableMeta {
+public class TableMeta implements Serializable{
+    private static final long serialVersionUID = 71857352996690259L;
+
     private String                  schema;
     private String                  name;
     private String                  primaryKey;

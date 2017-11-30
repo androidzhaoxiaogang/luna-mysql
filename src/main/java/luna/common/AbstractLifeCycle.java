@@ -2,12 +2,11 @@ package luna.common;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import luna.exception.LunaException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public abstract class AbstractLifeCycle implements LifeCycle{
-    protected final Logger  logger  = LogManager.getLogger("");
+    protected final Logger  logger  = LogManager.getLogger("luna");
     private AtomicBoolean   running = new AtomicBoolean(false);
 
     public boolean isStart(){ return running.get();}

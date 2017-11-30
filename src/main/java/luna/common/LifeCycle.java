@@ -1,13 +1,13 @@
 package luna.common;
 
 public interface LifeCycle {
-    public void start();
+    void start();
 
-    public void stop();
+    void stop();
 
-    public void abort(String why, Throwable e);
+    void abort(String why, Throwable e);
 
-    public boolean isStart();
+    boolean isStart();
 
-    public boolean isStop();
+    boolean isStop();
 }

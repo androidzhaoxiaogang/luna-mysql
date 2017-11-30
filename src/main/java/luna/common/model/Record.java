@@ -1,14 +1,15 @@
 package luna.common.model;
 
 import com.google.common.collect.Lists;
-import luna.common.db.meta.ColumnValue;
-import luna.exception.LunaException;
+import luna.common.model.meta.ColumnValue;
 import luna.util.StringStyle;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class Record {
+public class Record implements Serializable{
+    private static final long serialVersionUID = 4525923893891599547L;
 
     private String              schema;
     private String              table;

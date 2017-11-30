@@ -3,6 +3,7 @@ package luna.exception;
 import org.apache.commons.lang.exception.NestableRuntimeException;
 
 public class LunaException extends NestableRuntimeException {
+    private static final long serialVersionUID = -2402759774014045131L;
 
     public LunaException(String errorCode){
         super(errorCode);

@@ -2,14 +2,17 @@ package luna.common.context;
 
 import com.google.common.collect.Lists;
 import luna.common.model.SchemaTable;
-import luna.common.db.meta.TableMeta;
+import luna.common.model.meta.TableMeta;
 
 import javax.sql.DataSource;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MysqlContext {
+public class MysqlContext implements Serializable{
+    private static final long serialVersionUID = 4660863593558723238L;
+
     private DataSource                          sourceDs;
     private Map<SchemaTable,DataSource>         targetDs = new HashMap<>();
     private List<SchemaTable>                   sourceTables = Lists.newArrayList();

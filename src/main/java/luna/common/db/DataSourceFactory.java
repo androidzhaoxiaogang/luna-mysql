@@ -2,14 +2,16 @@ package luna.common.db;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import com.google.common.cache.*;
+import luna.common.AbstractLifeCycle;
 import luna.exception.LunaException;
 
 import javax.sql.DataSource;
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-public class DataSourceFactory {
+public class DataSourceFactory extends AbstractLifeCycle{
     private int                                         maxWait     = 5 * 1000;
     private int                                         minIdle     = 0;
     private int                                         initialSize = 0;
@@ -38,12 +40,13 @@ public class DataSourceFactory {
                                         config.getProperties());
                             }
                         });
-
+        logger.info("DataSourceFactory is started!" );
     }
 
 
     public void stop() {
         dataSources.invalidateAll();
+        logger.info("DataSourceFactory is stopped!");
     }
 
     public DataSource getDataSource(DataSourceConfig config) {
@@ -85,6 +88,7 @@ public class DataSourceFactory {
             dataSource.setValidationQuery("select 1");
             dataSource.setExceptionSorter("com.alibaba.druid.pool.vendor.MySqlExceptionSorter");
             dataSource.setValidConnectionCheckerClassName("com.alibaba.druid.pool.vendor.MySqlValidConnectionChecker");
+            logger.info("Datasource: "+dataSource+" Has inited!");
             return dataSource;
         } catch (Throwable e) {
              throw new LunaException(e);

@@ -2,13 +2,16 @@ package luna.common.context;
 
 import org.apache.logging.log4j.Logger;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Properties;
 
-public class KafkaContext {
+public class KafkaContext implements Serializable{
+    private static final long serialVersionUID = -3895503342199392437L;
+
     private List<String>    topics;
     private Properties      props;
-    private Logger          log;
+    //private Logger          log;
     private int             numConsumers;
 
     public List<String> getTopics() {
@@ -19,13 +22,13 @@ public class KafkaContext {
         this.topics = topics;
     }
 
-    public Logger getLog() {
-        return log;
-    }
-
-    public void setLog(Logger log) {
-        this.log = log;
-    }
+//    public Logger getLog() {
+//        return log;
+//    }
+//
+//    public void setLog(Logger log) {
+//        this.log = log;
+//    }
 
     public int getNumConsumers() {
         return numConsumers;

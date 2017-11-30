@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.Properties;
 
 public class DataSourceConfig implements Serializable {
+    private static final long serialVersionUID = 1264890831040718463L;
+
     private String            username;
     private String            password;
     private String            url;

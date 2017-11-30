@@ -1,7 +1,7 @@
 package luna.common.db;
 
-import luna.common.db.meta.ColumnMeta;
-import luna.common.db.meta.TableMeta;
+import luna.common.model.meta.ColumnMeta;
+import luna.common.model.meta.TableMeta;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;

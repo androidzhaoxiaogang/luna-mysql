@@ -3,7 +3,7 @@ package luna.applier;
 import luna.common.AbstractLifeCycle;
 import luna.common.context.MysqlContext;
 import luna.common.db.sql.SqlTemplates;
-import luna.common.db.meta.ColumnValue;
+import luna.common.model.meta.ColumnValue;
 import luna.common.model.Record;
 import luna.common.model.SchemaTable;
 import luna.exception.LunaException;
@@ -19,9 +19,9 @@ import java.sql.SQLException;
 import java.util.*;
 
 public class MysqlApplier extends AbstractLifeCycle implements Applier{
-    protected Map<SchemaTable, TableSqlUnit>   insertSqlCache;
-    protected Map<SchemaTable, TableSqlUnit>   updateSqlCache;
-    protected Map<SchemaTable, TableSqlUnit>   deleteSqlCache;
+    private Map<SchemaTable, TableSqlUnit>      insertSqlCache;
+    private Map<SchemaTable, TableSqlUnit>      updateSqlCache;
+    private Map<SchemaTable, TableSqlUnit>      deleteSqlCache;
     private MysqlContext                        mysqlContext;
     private MapMaker                            concurrentMapMaker = new MapMaker();
 
@@ -34,12 +34,12 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
         public Map<String,Integer>  applierIndex;
     }
 
-
     public void start(){
         super.start();
         insertSqlCache = concurrentMapMaker.makeMap();
         updateSqlCache = concurrentMapMaker.makeMap();
         deleteSqlCache = concurrentMapMaker.makeMap();
+        logger.info("MysqlApplier is started!");
     }
 
     public void stop(){
@@ -47,6 +47,7 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
         insertSqlCache.clear();
         updateSqlCache.clear();
         deleteSqlCache.clear();
+        logger.info("MysqlApplier is stopped!");
     }
 
     public void apply(Record record){
@@ -55,16 +56,11 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
     }
 
     public void apply(Record record, DataSource dataSource){
-        doApply(record,dataSource);
-    }
-
-    protected void doApply(Record record,DataSource dataSource){
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         applyRecord(record, jdbcTemplate);
-
     }
 
-    protected void applyRecord(Record record,JdbcTemplate jdbcTemplate){
+    private void applyRecord(Record record,JdbcTemplate jdbcTemplate){
         TableSqlUnit sqlUnit = getSqlUnit(record);
         String applierSql = sqlUnit.applierSql;
         Map<String,Integer> indexs = sqlUnit.applierIndex;
@@ -83,13 +79,14 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
                 } catch (SQLException e) {
                     throw new SQLException("failed Record Data : " + record.toString(), e);
                 }
+                logger.info("Record:"+record.toString()+": Has applied to mysql!");
                 return null;
             }
 
         });
     }
 
-    protected TableSqlUnit getSqlUnit(Record record) {
+    private TableSqlUnit getSqlUnit(Record record) {
         switch (record.getOperateType()) {
             case I:
                 return getInsertSqlUnit(record);
@@ -98,100 +95,84 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
             case D:
                 return getDeleteSqlUnit(record);
             default:
-                break;
+                throw new LunaException("Unknown opType " + record.getOperateType());
         }
-
-        throw new LunaException("unknow opType " + record.getOperateType());
     }
 
-    protected TableSqlUnit getInsertSqlUnit(Record record) {
+    private TableSqlUnit getInsertSqlUnit(Record record) {
         SchemaTable schemaTable = new SchemaTable(record.getSchema(), record.getTable());
         TableSqlUnit sqlUnit = insertSqlCache.get(schemaTable);
+        //不会多线程同时请求同一个SchemaTable，如果要考虑这种情况，可以synchronized(this){}，但是并发度会降低
         if (sqlUnit == null) {
-            synchronized (schemaTable) {
-                sqlUnit = insertSqlCache.get(schemaTable);
-                if (sqlUnit == null) { // double-check
-                    sqlUnit = new TableSqlUnit();
-                    String applierSql = null;
-                    String[] columns = record.getcolumnNames();
-
-                    applierSql = SqlTemplates.getMYSQL().getInsertSql(record.getSchema(),
-                            record.getTable(),
-                            columns);
-                    Map<String,Integer>indexs = new HashMap<>();
-                    int index=1;
-                    for(String col:columns){
-                        indexs.put(col,index);
-                        index++;
-                    }
-                    sqlUnit.applierSql = applierSql;
-                    sqlUnit.applierIndex = indexs;
-                    insertSqlCache.put(schemaTable, sqlUnit);
-                }
+            sqlUnit = new TableSqlUnit();
+            String applierSql;
+            String[] columns = record.getcolumnNames();
+            applierSql = SqlTemplates.getMYSQL().getInsertSql(record.getSchema(),
+                    record.getTable(),
+                    columns);
+            Map<String,Integer>indexs = new HashMap<>();
+            int index=1;
+            for(String col:columns){
+                indexs.put(col,index);
+                index++;
             }
+            sqlUnit.applierSql = applierSql;
+            sqlUnit.applierIndex = indexs;
+            insertSqlCache.put(schemaTable, sqlUnit);
         }
 
         return sqlUnit;
     }
 
-    protected TableSqlUnit getUpdateSqlUnit(Record record) {
+    private TableSqlUnit getUpdateSqlUnit(Record record) {
         SchemaTable schemaTable = new SchemaTable(record.getSchema(), record.getTable());
         TableSqlUnit sqlUnit = updateSqlCache.get(schemaTable);
+        //不会多线程同时请求同一个SchemaTable，如果要考虑这种情况，可以synchronized(this){}，但是并发度会降低
         if (sqlUnit == null) {
-            synchronized (schemaTable) {
-                sqlUnit = updateSqlCache.get(schemaTable);
-                if (sqlUnit == null) { // double-check
-                    sqlUnit = new TableSqlUnit();
-                    String applierSql = null;
-
-                    String [] primaryKey = {record.getPrimaryKey()};
-                    String[] columns = record.getcolumnNames();
-                    applierSql = SqlTemplates.getMYSQL().getUpdateSql(record.getSchema(),
-                            record.getTable(),
-                            primaryKey,
-                            columns);
-                    Map<String,Integer>indexs = new HashMap<>();
-                    int index = 1;
-                    for(String col:columns){
-                        if(!col.equalsIgnoreCase(record.getPrimaryKey())){
-                            indexs.put(col,index);
-                            index++;
-                        }
-                    }
-                    indexs.put(record.getPrimaryKey(),index);
-                    sqlUnit.applierSql = applierSql;
-                    sqlUnit.applierIndex = indexs;
-                    updateSqlCache.put(schemaTable, sqlUnit);
+            sqlUnit = new TableSqlUnit();
+            String applierSql;
+            String [] primaryKey = {record.getPrimaryKey()};
+            String[] columns = record.getcolumnNames();
+            applierSql = SqlTemplates.getMYSQL().getUpdateSql(record.getSchema(),
+                    record.getTable(),
+                    primaryKey,
+                    columns);
+            Map<String,Integer>indexs = new HashMap<>();
+            int index = 1;
+            for(String col:columns){
+                if(!col.equalsIgnoreCase(record.getPrimaryKey())){
+                    indexs.put(col,index);
+                    index++;
                 }
             }
+            indexs.put(record.getPrimaryKey(),index);
+            sqlUnit.applierSql = applierSql;
+            sqlUnit.applierIndex = indexs;
+            updateSqlCache.put(schemaTable, sqlUnit);
         }
 
         return sqlUnit;
     }
 
 
-    protected TableSqlUnit getDeleteSqlUnit(Record record) {
+    private TableSqlUnit getDeleteSqlUnit(Record record) {
         SchemaTable schemaTable = new SchemaTable(record.getSchema(), record.getTable());
         TableSqlUnit sqlUnit = deleteSqlCache.get(schemaTable);
+        //不会多线程同时请求同一个SchemaTable，如果要考虑这种情况，可以synchronized(this){}，但是并发度会降低
         if (sqlUnit == null) {
-            synchronized (schemaTable) {
-                sqlUnit = deleteSqlCache.get(schemaTable);
-                if (sqlUnit == null) { // double-check
-                    sqlUnit = new TableSqlUnit();
-                    String applierSql = null;
-                    String[] primaryKey = {record.getPrimaryKey()};
-                    applierSql = SqlTemplates.getMYSQL().getDeleteSql(record.getSchema(),
-                            record.getTable(), primaryKey);
-                    sqlUnit.applierSql = applierSql;
-                    sqlUnit.applierIndex.put(record.getPrimaryKey(),1);
-                    for(String col:record.getcolumnNames()){
-                        if(!col.equalsIgnoreCase(record.getPrimaryKey())){
-                            sqlUnit.applierIndex.put(col,-1);
-                        }
-                    }
-                    deleteSqlCache.put(schemaTable, sqlUnit);
+            sqlUnit = new TableSqlUnit();
+            String applierSql;
+            String[] primaryKey = {record.getPrimaryKey()};
+            applierSql = SqlTemplates.getMYSQL().getDeleteSql(record.getSchema(),
+                    record.getTable(), primaryKey);
+            sqlUnit.applierSql = applierSql;
+            sqlUnit.applierIndex.put(record.getPrimaryKey(),1);
+            for(String col:record.getcolumnNames()){
+                if(!col.equalsIgnoreCase(record.getPrimaryKey())){
+                    sqlUnit.applierIndex.put(col,-1);
                 }
             }
+            deleteSqlCache.put(schemaTable, sqlUnit);
         }
 
         return sqlUnit;

@@ -3,7 +3,11 @@ package luna.common.model;
 import luna.util.StringStyle;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
-public class SchemaTable{
+import java.io.Serializable;
+
+public class SchemaTable implements Serializable{
+    private static final long serialVersionUID = 2102370099863511331L;
+
     private String schema;
     private String table;
 

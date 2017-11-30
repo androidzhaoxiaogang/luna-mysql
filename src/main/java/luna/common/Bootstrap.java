@@ -4,7 +4,7 @@ import luna.common.context.KafkaContext;
 import luna.common.context.MysqlContext;
 import luna.common.db.DataSourceConfig;
 import luna.common.db.DataSourceFactory;
-import luna.common.db.meta.TableMeta;
+import luna.common.model.meta.TableMeta;
 import luna.common.model.SchemaTable;
 import luna.common.db.TableMetaGenerator;
 import luna.exception.LunaException;
@@ -13,8 +13,6 @@ import luna.applier.MysqlApplier;
 import luna.util.ConfigUtil;
 import luna.extractor.KafkaExtractor;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import javax.sql.DataSource;
 import java.util.List;
@@ -56,6 +54,7 @@ public class Bootstrap extends AbstractLifeCycle{
         kafkaExtractor = new KafkaExtractor(kafkaContext,kafkaRecordTranslator);
         kafkaExtractor.start();
         kafkaExtractor.extract();
+        logger.info("Bootstrap is started!");
     }
 
     public void stop(){
@@ -64,6 +63,7 @@ public class Bootstrap extends AbstractLifeCycle{
         mysqlApplier.stop();
         dataSourceFactory.stop();
         super.stop();
+        logger.info("Bootstrap is stopped!");
     }
 
     private void initKafkaContext(){
@@ -84,12 +84,10 @@ public class Bootstrap extends AbstractLifeCycle{
         props.put("sasl.mechanism", "PLAIN");
         props.put("enable.auto.commit", "false");
 
-        Logger log= LogManager.getLogger("kafka");
-
-        kafkaContext.setLog(log);
         kafkaContext.setNumConsumers(numConsumers);
         kafkaContext.setProps(props);
         kafkaContext.setTopics(topics);
+        logger.info("KafkaContext has inited!");
     }
 
     private void initMysqlContext(){
@@ -130,7 +128,7 @@ public class Bootstrap extends AbstractLifeCycle{
             }
 
         }
-
+        logger.info("MysqlContext has inited!");
     }
 
     private DataSource initDataSource(String url, String username, String password, String encode, String poolSize, String driver){

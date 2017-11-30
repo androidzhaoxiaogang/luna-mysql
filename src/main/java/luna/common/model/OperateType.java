@@ -1,5 +1,7 @@
 package luna.common.model;
 
-public enum OperateType {
-    I/* INSERT */, U/* UPDATE */, D/* DELETE */,UNKNOWN/*UNKNOWN*/;
+import java.io.Serializable;
+
+public enum OperateType implements Serializable{
+    I/* INSERT */, U/* UPDATE */, D/* DELETE */,UNKNOWN/*UNKNOWN*/
 }

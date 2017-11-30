@@ -1,6 +1,10 @@
-package luna.common.db.meta;
+package luna.common.model.meta;
 
-public class ColumnValue {
+import java.io.Serializable;
+
+public class ColumnValue implements Serializable{
+    private static final long serialVersionUID = 6348862195538684854L;
+
     private ColumnMeta  column;
     private Object      value;
 

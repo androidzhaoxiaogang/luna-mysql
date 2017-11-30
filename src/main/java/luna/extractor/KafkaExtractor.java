@@ -7,11 +7,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.collect.Lists;
+import luna.util.DingDingMsgUtil;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.log4j.BasicConfigurator;
-import org.apache.logging.log4j.Logger;
 
 import luna.common.*;
 import luna.common.context.KafkaContext;
@@ -34,9 +34,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
     private KafkaContext            kafkaContext;
     private ExecutorService         executor;
     private List<ConsumerLoop>      consumers = Lists.newArrayList();
-    private Logger                  log;
     private KafkaRecordTranslator   kafkaRecordTranslator;
-
 
     public KafkaExtractor(KafkaContext kafkaContext, KafkaRecordTranslator kafkaRecordTranslator) {
         this.kafkaContext=kafkaContext;
@@ -47,25 +45,24 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
         super.start();
         System.setProperty("java.security.auth.login.config", "src/conf/kafka_client_jaas.conf");
         BasicConfigurator.configure();
-        log=kafkaContext.getLog();
     }
 
     public void stop() {
         super.stop();
         consumers.forEach(consumerThread -> consumerThread.shutdown());
         executor.shutdown();
-        log.info("All consumer is shutdown!");
+        logger.info("All consumer is shutdown!");
         try {
             executor.awaitTermination(5000, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            log.error(e);
+            logger.error(e);
         }
     }
 
     public void extract() {
         executor = Executors.newFixedThreadPool(kafkaContext.getNumConsumers());
         int topicNum = kafkaContext.getTopics().size();
-        log.info("thread.num: "+kafkaContext.getNumConsumers()+" and topic.num: "+ topicNum);
+        logger.info("thread.num: "+kafkaContext.getNumConsumers()+" and topic.num: "+ topicNum);
         HashMap <Integer,ArrayList<String>> consumerTopics = new HashMap<>();
 
         for (int j=0;j<topicNum;j++){
@@ -99,17 +96,19 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
         public void run() {
             try {
                 monitorRebalance();
-                log.info("Thread-"+Thread.currentThread().getId()+" Get kafka client!");
+                logger.info("Thread-"+Thread.currentThread().getId()+" Get kafka client!");
                 ConsumerRecords<String, String> records;
                 while (running.get()) {
                     records = consumer.poll(Long.MAX_VALUE);
                     for (ConsumerRecord<String, String> consumerRecord : records) {
                         try {
+                            logger.info(consumerRecord);
                             Map<String, Object> payload = (Map<String, Object>) JSONValue.parseWithException(consumerRecord.value());
                             kafkaRecordTranslator.translate(payload);
                             consumer.commitSync();
                         }catch (Throwable e){
-                            log.error(e);
+                            DingDingMsgUtil.sendMsg(e.getMessage());
+                            logger.error(e);
                             shutdown();
                         }
                     }
@@ -118,7 +117,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                 // ignore for shutdown
             } finally {
                 consumer.close();
-                log.info("Consumer Thread "+ Thread.currentThread().getId() + "is closed!");
+                logger.info("Consumer Thread "+ Thread.currentThread().getId() + "is closed!");
             }
         }
 
@@ -133,7 +132,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
 
                 public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
                     partitions.forEach(partition -> {
-                        log.info("Rebalance happened " + partition.topic() + ":" + partition.partition());
+                        logger.info("Rebalance happened " + partition.topic() + ":" + partition.partition());
                     });
                 }
             });
