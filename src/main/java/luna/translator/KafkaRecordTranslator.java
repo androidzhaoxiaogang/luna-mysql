@@ -41,7 +41,7 @@ public class KafkaRecordTranslator extends AbstractLifeCycle implements Translat
         SchemaTable schemaTable = new SchemaTable(schema,tableName);
         TableMeta tableMeta = mysqlContext.getTableMetas().get(schemaTable);
         //int splitColumnValue = (int)(long)recordPayload.get(tableMeta.getExtKey());
-        int splitColumnValue = fourSplitValue((String)recordPayload.get(tableMeta.getExtKey()));
+        int splitColumnValue = fourSplitValue(String.valueOf(recordPayload.get(tableMeta.getExtKey())));
         int targetNum = splitColumnValue%tableMeta.getExtNum();
         String targetSchema = schema+targetNum;
         String targetTable = tableName;
