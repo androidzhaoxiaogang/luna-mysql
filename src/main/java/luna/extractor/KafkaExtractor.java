@@ -16,8 +16,6 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.log4j.BasicConfigurator;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONValue;
 
 /**
@@ -37,12 +35,10 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
     private ExecutorService         executor;
     private List<ConsumerLoop>      consumers = Lists.newArrayList();
     private KafkaRecordTranslator   kafkaRecordTranslator;
-    private Logger                  log;
 
     public KafkaExtractor(KafkaContext kafkaContext, KafkaRecordTranslator kafkaRecordTranslator) {
         this.kafkaContext=kafkaContext;
         this.kafkaRecordTranslator=kafkaRecordTranslator;
-        log = LogManager.getLogger("kafka");
     }
 
     public void start() {
@@ -55,18 +51,18 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
         super.stop();
         consumers.forEach(consumerThread -> consumerThread.shutdown());
         executor.shutdown();
-        log.info("All consumer is shutdown!");
+        logger.info("All consumer is shutdown!");
         try {
             executor.awaitTermination(5000, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            log.error(e);
+            logger.error(e);
         }
     }
 
     public void extract() {
         executor = Executors.newFixedThreadPool(kafkaContext.getNumConsumers());
         int topicNum = kafkaContext.getTopics().size();
-        log.info("thread.num: "+kafkaContext.getNumConsumers()+" and topic.num: "+ topicNum);
+        logger.info("thread.num: "+kafkaContext.getNumConsumers()+" and topic.num: "+ topicNum);
         HashMap <Integer,ArrayList<String>> consumerTopics = new HashMap<>();
 
         for (int j=0;j<topicNum;j++){
@@ -100,19 +96,19 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
         public void run() {
             try {
                 monitorRebalance();
-                log.info("Thread-"+Thread.currentThread().getId()+" Get kafka client!");
+                logger.info("Thread-"+Thread.currentThread().getId()+" Get kafka client!");
                 ConsumerRecords<String, String> records;
                 while (running.get()) {
                     records = consumer.poll(Long.MAX_VALUE);
                     for (ConsumerRecord<String, String> consumerRecord : records) {
                         try {
-                            log.info(consumerRecord);
+                            logger.info(consumerRecord);
                             Map<String, Object> payload = (Map<String, Object>) JSONValue.parseWithException(consumerRecord.value());
                             kafkaRecordTranslator.translate(payload);
                             consumer.commitSync();
                         }catch (Throwable e){
                             DingDingMsgUtil.sendMsg(e.getLocalizedMessage());
-                            log.error(e.getLocalizedMessage());
+                            logger.error(e.getLocalizedMessage());
                             shutdown();
                         }
                     }
@@ -121,7 +117,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                 // ignore for shutdown
             } finally {
                 consumer.close();
-                log.info("Consumer Thread "+ Thread.currentThread().getId() + "is closed!");
+                logger.info("Consumer Thread "+ Thread.currentThread().getId() + "is closed!");
             }
         }
 
@@ -136,7 +132,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
 
                 public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
                     partitions.forEach(partition -> {
-                        log.info("Rebalance happened " + partition.topic() + ":" + partition.partition());
+                        logger.info("Rebalance happened " + partition.topic() + ":" + partition.partition());
                     });
                 }
             });

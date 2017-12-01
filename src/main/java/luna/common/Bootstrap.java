@@ -54,11 +54,11 @@ public class Bootstrap extends AbstractLifeCycle{
         kafkaExtractor = new KafkaExtractor(kafkaContext,kafkaRecordTranslator);
         kafkaExtractor.start();
         kafkaExtractor.extract();
-        //logger.info("Bootstrap is started!");
+        logger.info("Bootstrap is started!");
     }
 
     public void stop(){
-        //logger.info("Bootstrap is stopped!");
+        logger.info("Bootstrap is stopped!");
         kafkaRecordTranslator.stop();
         mysqlApplier.stop();
         kafkaExtractor.stop();
@@ -87,7 +87,7 @@ public class Bootstrap extends AbstractLifeCycle{
         kafkaContext.setNumConsumers(numConsumers);
         kafkaContext.setProps(props);
         kafkaContext.setTopics(topics);
-        //logger.info("KafkaContext has inited!");
+        logger.info("KafkaContext has inited!");
     }
 
     private void initMysqlContext(){
@@ -128,11 +128,11 @@ public class Bootstrap extends AbstractLifeCycle{
             }
 
         }
-        //logger.info("MysqlContext has inited!");
-//        logger.info("Target table meta: "+mysqlContext.getTableMetas());
-//        logger.info("Source tables: "+mysqlContext.getSourceTables());
-//        logger.info("Target datasource: "+mysqlContext.getTargetDs());
-//        logger.info("Source datasource: "+mysqlContext.getSourceDs());
+        logger.info("MysqlContext has inited!");
+        logger.info("Target table meta: "+mysqlContext.getTableMetas());
+        logger.info("Source tables: "+mysqlContext.getSourceTables());
+        logger.info("Target datasource: "+mysqlContext.getTargetDs());
+        logger.info("Source datasource: "+mysqlContext.getSourceDs());
     }
 
     private DataSource initDataSource(String url, String username, String password, String encode, String poolSize, String driver){

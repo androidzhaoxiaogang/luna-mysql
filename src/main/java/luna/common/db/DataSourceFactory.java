@@ -40,14 +40,14 @@ public class DataSourceFactory extends AbstractLifeCycle{
                                         config.getProperties());
                             }
                         });
-        //logger.info("DataSourceFactory is started!" );
+        logger.info("DataSourceFactory is started!" );
     }
 
 
     public void stop() {
         super.stop();
         dataSources.invalidateAll();
-        //logger.info("DataSourceFactory is stopped!");
+        logger.info("DataSourceFactory is stopped!");
     }
 
     public DataSource getDataSource(DataSourceConfig config) {
@@ -89,7 +89,6 @@ public class DataSourceFactory extends AbstractLifeCycle{
             dataSource.setValidationQuery("select 1");
             dataSource.setExceptionSorter("com.alibaba.druid.pool.vendor.MySqlExceptionSorter");
             dataSource.setValidConnectionCheckerClassName("com.alibaba.druid.pool.vendor.MySqlValidConnectionChecker");
-            //logger.info("Datasource: "+dataSource+" Has inited!");
             return dataSource;
         } catch (Throwable e) {
              throw new LunaException(e);

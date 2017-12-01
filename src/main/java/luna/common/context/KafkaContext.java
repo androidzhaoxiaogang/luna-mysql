@@ -13,7 +13,6 @@ public class KafkaContext implements Serializable{
 
     private List<String>    topics;
     private Properties      props;
-    //private Logger          log;
     private int             numConsumers;
 
     public List<String> getTopics() {
@@ -23,14 +22,6 @@ public class KafkaContext implements Serializable{
     public void setTopics(List<String> topics) {
         this.topics = topics;
     }
-
-//    public Logger getLog() {
-//        return log;
-//    }
-//
-//    public void setLog(Logger log) {
-//        this.log = log;
-//    }
 
     public int getNumConsumers() {
         return numConsumers;
