@@ -40,7 +40,8 @@ public class KafkaRecordTranslator extends AbstractLifeCycle implements Translat
         Map<String,Object> recordPayload = (Map<String, Object>) payload.get("data");
         SchemaTable schemaTable = new SchemaTable(schema,tableName);
         TableMeta tableMeta = mysqlContext.getTableMetas().get(schemaTable);
-        int splitColumnValue = (int)(long)recordPayload.get(tableMeta.getExtKey());
+        //int splitColumnValue = (int)(long)recordPayload.get(tableMeta.getExtKey());
+        int splitColumnValue = fourSplitValue((String)recordPayload.get(tableMeta.getExtKey()));
         int targetNum = splitColumnValue%tableMeta.getExtNum();
         String targetSchema = schema+targetNum;
         String targetTable = tableName;
@@ -51,6 +52,19 @@ public class KafkaRecordTranslator extends AbstractLifeCycle implements Translat
             record.addColumn(column);
         });
         mysqlApplier.apply(record);
+    }
+
+    private int fourSplitValue(String value){
+        int fourValue=0;
+        for (int i = 1; i <= 4 && value.length() - i >= 0; i++) {
+            char digit = value.charAt(value.length() - i);
+            if(Character.isDigit(digit)) {
+                fourValue = fourValue + Character.getNumericValue(digit) * (int) Math.pow(10, i - 1);
+            }else{
+                throw new LunaException("Can not parse the last four digit of "+value);
+            }
+        }
+        return fourValue;
     }
 
     private OperateType getOpType(String type){

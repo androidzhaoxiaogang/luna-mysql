@@ -110,6 +110,9 @@ public class Bootstrap extends AbstractLifeCycle{
             SchemaTable schemaTable = new SchemaTable(schema,table);
             String splitColumn = (String)map.get("split.column");
             int splitNum = (int)map.get("split.num");
+            if(!isBlob(splitNum)){
+                throw new LunaException("ERROR: Split number is not a BLOB");
+            }
             mysqlContext.addSourceTable(schemaTable);
             TableMeta tableMeta = TableMetaGenerator.buildColumns(mysqlContext.getSourceDs(),schema,table);
             tableMeta.setExtKey(splitColumn);
@@ -150,5 +153,17 @@ public class Bootstrap extends AbstractLifeCycle{
         properties.setProperty("characterEncoding", encode);
         DataSourceConfig dsConfig = new DataSourceConfig(url, username, password, driver, properties);
         return dataSourceFactory.getDataSource(dsConfig);
+    }
+
+
+    private boolean isBlob(int num){
+        int i=1;
+        while(i<num){
+            i=i*2;
+        }
+        if(i==num){
+            return true;
+        }
+        return false;
     }
 }
