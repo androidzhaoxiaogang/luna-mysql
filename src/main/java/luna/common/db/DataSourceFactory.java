@@ -89,6 +89,7 @@ public class DataSourceFactory extends AbstractLifeCycle{
             dataSource.setValidationQuery("select 1");
             dataSource.setExceptionSorter("com.alibaba.druid.pool.vendor.MySqlExceptionSorter");
             dataSource.setValidConnectionCheckerClassName("com.alibaba.druid.pool.vendor.MySqlValidConnectionChecker");
+            logger.info("Create datasource: "+dataSource);
             return dataSource;
         } catch (Throwable e) {
              throw new LunaException(e);
