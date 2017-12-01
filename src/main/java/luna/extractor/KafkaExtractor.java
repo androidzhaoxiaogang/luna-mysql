@@ -55,7 +55,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
         try {
             executor.awaitTermination(5000, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            logger.error(e);
+            errorLog.error(e);
         }
     }
 
@@ -108,7 +108,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                             consumer.commitSync();
                         }catch (Throwable e){
                             DingDingMsgUtil.sendMsg(e.getLocalizedMessage());
-                            logger.error(e.getLocalizedMessage());
+                            errorLog.error(e.getLocalizedMessage());
                             shutdown();
                         }
                     }

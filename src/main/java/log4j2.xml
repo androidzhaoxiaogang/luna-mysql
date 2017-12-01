@@ -4,7 +4,16 @@
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
         </Console>
-        <RollingFile name="Luna" fileName="/data/luna/logs/luna/luna.log"
+        <RollingFile name="Error" fileName="/data/luna/logs/error.log"
+                     filePattern="/data/luna/logs/error/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="10MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="20" />
+        </RollingFile>
+        <RollingFile name="Luna" fileName="/data/luna/logs/luna.log"
                      filePattern="/data/luna/logs/luna/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
             <Policies>
@@ -13,7 +22,7 @@
             </Policies>
             <DefaultRolloverStrategy max="20" />
         </RollingFile>
-        <RollingFile name="DingDing" fileName="/data/luna/logs/ding/ding.log"
+        <RollingFile name="DingDing" fileName="/data/luna/logs/ding.log"
                      filePattern="/data/luna/logs/ding/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
             <Policies>
@@ -22,7 +31,7 @@
             </Policies>
             <DefaultRolloverStrategy max="20" />
         </RollingFile>
-        <RollingFile name="Time" fileName="/data/luna/logs/time/time.log"
+        <RollingFile name="Time" fileName="/data/luna/logs/time.log"
                      filePattern="/data/luna/logs/time/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
             <PatternLayout pattern="%msg%n" />
             <Policies>
@@ -36,6 +45,10 @@
         <Logger name="time" level="info" additivity="false">
             <appender-ref ref="Console" />
             <AppenderRef ref="Time" />
+        </Logger>
+        <Logger name="error" level="error" additivity="false">
+            <appender-ref ref="Console" />
+            <AppenderRef ref="Error" />
         </Logger>
         <Logger name="luna" level="trace" additivity="false">
             <appender-ref ref="Console" />
