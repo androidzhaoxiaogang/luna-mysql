@@ -121,7 +121,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                             }
                         }catch (Throwable e){
                             DingDingMsgUtil.sendMsg(ExceptionUtils.getFullStackTrace(e));
-                            errorLog.error(ExceptionUtils.getFullStackTrace(e));
+                            errorLog.error("ERROR can not handle by retry: "+ExceptionUtils.getFullStackTrace(e));
                             shutdown();
                         }
                     }
