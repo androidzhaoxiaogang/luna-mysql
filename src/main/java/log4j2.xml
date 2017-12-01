@@ -4,8 +4,8 @@
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
         </Console>
-        <RollingFile name="Error" fileName="/data/luna/logs/error.log"
-                     filePattern="/data/luna/logs/error/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
+        <RollingFile name="Error" fileName="/data/luna-logs/error.log"
+                     filePattern="/data/luna-logs/error/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
             <Policies>
                 <TimeBasedTriggeringPolicy />
@@ -13,8 +13,8 @@
             </Policies>
             <DefaultRolloverStrategy max="20" />
         </RollingFile>
-        <RollingFile name="Luna" fileName="/data/luna/logs/luna.log"
-                     filePattern="/data/luna/logs/luna/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
+        <RollingFile name="Luna" fileName="/data/luna-logs/luna.log"
+                     filePattern="/data/luna-logs/luna/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
             <Policies>
                 <TimeBasedTriggeringPolicy />
@@ -22,8 +22,8 @@
             </Policies>
             <DefaultRolloverStrategy max="20" />
         </RollingFile>
-        <RollingFile name="DingDing" fileName="/data/luna/logs/ding.log"
-                     filePattern="/data/luna/logs/ding/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
+        <RollingFile name="DingDing" fileName="/data/luna-logs/ding.log"
+                     filePattern="/data/luna-logs/ding/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
             <Policies>
                 <TimeBasedTriggeringPolicy />
@@ -31,8 +31,8 @@
             </Policies>
             <DefaultRolloverStrategy max="20" />
         </RollingFile>
-        <RollingFile name="Time" fileName="/data/luna/logs/time.log"
-                     filePattern="/data/luna/logs/time/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
+        <RollingFile name="Time" fileName="/data/luna-logs/time.log"
+                     filePattern="/data/luna-logs/time/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
             <PatternLayout pattern="%msg%n" />
             <Policies>
                 <TimeBasedTriggeringPolicy />
