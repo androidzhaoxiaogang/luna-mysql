@@ -55,7 +55,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
         try {
             executor.awaitTermination(5000, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            errorLog.error(e);
+            errorLog.error(e.getLocalizedMessage());
         }
     }
 
@@ -117,7 +117,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                 // ignore for shutdown
             } finally {
                 consumer.close();
-                logger.info("Consumer Thread "+ Thread.currentThread().getId() + "is closed!");
+                errorLog.error("Consumer Thread "+ Thread.currentThread().getId() + "is closed!");
             }
         }
 
