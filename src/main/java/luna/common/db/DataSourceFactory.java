@@ -6,7 +6,6 @@ import luna.common.AbstractLifeCycle;
 import luna.exception.LunaException;
 
 import javax.sql.DataSource;
-import java.io.Serializable;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
