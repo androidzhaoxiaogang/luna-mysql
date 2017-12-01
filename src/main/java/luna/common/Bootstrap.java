@@ -72,6 +72,8 @@ public class Bootstrap extends AbstractLifeCycle{
         List<String> topics=(List<String>) inputConfigs.get("topics");
         String maxFetchByte = ""+inputConfigs.get("max.fetch.byte");
         int maxPollRecords=(int)inputConfigs.get("max.poll.records");
+        int retryTimes =(int)inputConfigs.get("retry.times");
+        int retryInterval = (int)inputConfigs.get("retry.interval");
 
         Properties props = new Properties();
         props.put("bootstrap.servers", inputConfigs.get("bootstrap.servers"));
@@ -84,6 +86,8 @@ public class Bootstrap extends AbstractLifeCycle{
         props.put("sasl.mechanism", "PLAIN");
         props.put("enable.auto.commit", "false");
 
+        kafkaContext.setRetryTimes(retryTimes);
+        kafkaContext.setRetryInterval(retryInterval);
         kafkaContext.setNumConsumers(numConsumers);
         kafkaContext.setProps(props);
         kafkaContext.setTopics(topics);

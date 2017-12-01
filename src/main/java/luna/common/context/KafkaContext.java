@@ -14,6 +14,8 @@ public class KafkaContext implements Serializable{
     private List<String>    topics;
     private Properties      props;
     private int             numConsumers;
+    private int             retryTimes;
+    private int             retryInterval;
 
     public List<String> getTopics() {
         return topics;
@@ -41,5 +43,21 @@ public class KafkaContext implements Serializable{
 
     public String toString(){
         return ToStringBuilder.reflectionToString(this, StringStyle.DEFAULT_STYLE);
+    }
+
+    public int getRetryTimes() {
+        return retryTimes;
+    }
+
+    public void setRetryTimes(int retryTimes) {
+        this.retryTimes = retryTimes;
+    }
+
+    public int getRetryInterval() {
+        return retryInterval;
+    }
+
+    public void setRetryInterval(int retryInterval) {
+        this.retryInterval = retryInterval;
     }
 }

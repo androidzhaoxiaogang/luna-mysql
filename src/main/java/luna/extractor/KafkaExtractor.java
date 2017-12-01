@@ -12,6 +12,7 @@ import luna.translator.KafkaRecordTranslator;
 
 import com.google.common.collect.Lists;
 import luna.util.DingDingMsgUtil;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
@@ -55,7 +56,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
         try {
             executor.awaitTermination(5000, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            errorLog.error(e.getLocalizedMessage());
+            errorLog.error(ExceptionUtils.getFullStackTrace(e));
         }
     }
 
@@ -102,13 +103,25 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                     records = consumer.poll(Long.MAX_VALUE);
                     for (ConsumerRecord<String, String> consumerRecord : records) {
                         try {
-                            logger.info(consumerRecord);
-                            Map<String, Object> payload = (Map<String, Object>) JSONValue.parseWithException(consumerRecord.value());
-                            kafkaRecordTranslator.translate(payload);
-                            consumer.commitSync();
+                            //增加重试
+                            for(int i=0; i<kafkaContext.getRetryTimes(); i++){
+                                try{
+                                    logger.info(consumerRecord);
+                                    Map<String, Object> payload = (Map<String, Object>) JSONValue.parseWithException(consumerRecord.value());
+                                    kafkaRecordTranslator.translate(payload);
+                                    consumer.commitSync();
+                                    //正常break
+                                    break;
+                                }catch (Throwable e){
+                                    if(processError(e,i)){
+                                        //InterruptedException或者重试次数满了: break
+                                        throw e;
+                                    }
+                                }
+                            }
                         }catch (Throwable e){
-                            DingDingMsgUtil.sendMsg(e.getLocalizedMessage());
-                            errorLog.error(e.getLocalizedMessage());
+                            DingDingMsgUtil.sendMsg(ExceptionUtils.getFullStackTrace(e));
+                            errorLog.error(ExceptionUtils.getFullStackTrace(e));
                             shutdown();
                         }
                     }
@@ -136,6 +149,34 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                     });
                 }
             });
+        }
+
+        private boolean processError(Throwable e, int i){
+            if (!(ExceptionUtils.getRootCause(e) instanceof InterruptedException)) {
+                errorLog.error("retry {} ,something error happened. caused by {}",
+                        (i + 1),
+                        ExceptionUtils.getFullStackTrace(e));
+                try {
+                    DingDingMsgUtil.sendMsg("retry "+(i+1)+",something error happened. caused by "+ExceptionUtils.getFullStackTrace(e));
+                } catch (Throwable e1) {
+                    logger.error("send DingDing alarm failed. ", e1);
+                }
+
+                try {
+                    Thread.sleep(kafkaContext.getRetryInterval());
+                } catch (InterruptedException e1) {
+                    Thread.currentThread().interrupt();
+                    return true;
+                }
+                if(i==kafkaContext.getRetryTimes()-1){
+                    return true;
+                }
+            } else {
+                // interrupt事件，响应退出
+                return true;
+            }
+
+            return false;
         }
     }
 }
