@@ -1,6 +1,7 @@
 package luna.extractor;
 
 import java.util.*;
+import java.util.concurrent.DelayQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +37,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
     private ExecutorService         executor;
     private List<ConsumerLoop>      consumers = Lists.newArrayList();
     private KafkaRecordTranslator   kafkaRecordTranslator;
+    private DelayQueue<Purgatory>   delayQueue = new DelayQueue<>();
 
     public KafkaExtractor(KafkaContext kafkaContext, KafkaRecordTranslator kafkaRecordTranslator) {
         this.kafkaContext=kafkaContext;
@@ -61,27 +63,34 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
     }
 
     public void extract() {
-        executor = Executors.newFixedThreadPool(kafkaContext.getNumConsumers());
         int topicNum = kafkaContext.getTopics().size();
-        logger.info("thread.num: "+kafkaContext.getNumConsumers()+" and topic.num: "+ topicNum);
-        HashMap <Integer,ArrayList<String>> consumerTopics = new HashMap<>();
-
-        for (int j=0;j<topicNum;j++){
-            int thread = j%kafkaContext.getNumConsumers();
-            if(consumerTopics.containsKey(thread)){
-                consumerTopics.get(thread).add(kafkaContext.getTopics().get(j));
-            }else{
-                ArrayList<String>topicLists = new ArrayList<>();
-                topicLists.add(kafkaContext.getTopics().get(j));
-                consumerTopics.put(thread,topicLists);
-            }
-        }
-
-        consumerTopics.forEach((key,topicLists)->{
-            ConsumerLoop consumer = new ConsumerLoop(kafkaContext.getProps(),topicLists);
+        executor = Executors.newFixedThreadPool(topicNum);
+        for (String topic:kafkaContext.getTopics()){
+            List<String> topicList = Lists.newArrayList();
+            topicList.add(topic);
+            ConsumerLoop consumer = new ConsumerLoop(kafkaContext.getProps(),topicList);
             consumers.add(consumer);
             executor.submit(consumer);
-        });
+        }
+
+        Thread purge = new Thread(new Purge());
+        purge.start();
+    }
+
+    public class Purge implements Runnable{
+        @Override
+        public void run() {
+            while (delayQueue!=null){
+                try{
+                    Purgatory purgatory=delayQueue.take();
+                    ConsumerLoop consumer = new ConsumerLoop(kafkaContext.getProps(),purgatory.getTopics());
+                    consumers.add(consumer);
+                    executor.submit(consumer);
+                }catch (InterruptedException e){
+                    errorLog.error(ExceptionUtils.getFullStackTrace(e));
+                }
+            }
+        }
     }
 
     public class ConsumerLoop implements Runnable {
@@ -131,11 +140,20 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
             } finally {
                 consumer.close();
                 errorLog.error("Consumer Thread "+ Thread.currentThread().getId() + "is closed!");
+                purge(topics);
+                errorLog.error("Put this topic into purgatory.");
             }
         }
 
         public void shutdown() {
             consumer.wakeup();
+        }
+
+        private void purge(List<String> topics){
+            long now = System.currentTimeMillis();
+            long delay = now + TimeUnit.MINUTES.toMillis(10);
+            Purgatory purgatory = new Purgatory(topics,delay,TimeUnit.MILLISECONDS);
+            delayQueue.offer(purgatory);
         }
 
         private void monitorRebalance(){

@@ -67,7 +67,6 @@ public class Bootstrap extends AbstractLifeCycle{
     }
 
     private void initKafkaContext(){
-        int numConsumers = (Integer)inputConfigs.get("thread.num");
         String groupId = (String)inputConfigs.get("group.id");
         List<String> topics=(List<String>) inputConfigs.get("topics");
         String maxFetchByte = ""+inputConfigs.get("max.fetch.byte");
@@ -88,7 +87,6 @@ public class Bootstrap extends AbstractLifeCycle{
 
         kafkaContext.setRetryTimes(retryTimes);
         kafkaContext.setRetryInterval(retryInterval);
-        kafkaContext.setNumConsumers(numConsumers);
         kafkaContext.setProps(props);
         kafkaContext.setTopics(topics);
         logger.info("KafkaContext has inited!");
