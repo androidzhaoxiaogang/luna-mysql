@@ -9,8 +9,6 @@ import luna.common.model.SchemaTable;
 import luna.exception.LunaException;
 
 import com.google.common.collect.MapMaker;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;

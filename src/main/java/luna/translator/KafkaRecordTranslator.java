@@ -10,7 +10,10 @@ import luna.common.model.Record;
 import luna.common.model.SchemaTable;
 import luna.applier.MysqlApplier;
 import luna.exception.LunaException;
+import luna.util.TimeUtil;
+import org.apache.commons.lang.exception.ExceptionUtils;
 
+import java.text.ParseException;
 import java.util.Map;
 
 public class KafkaRecordTranslator extends AbstractLifeCycle implements Translator {
@@ -38,6 +41,18 @@ public class KafkaRecordTranslator extends AbstractLifeCycle implements Translat
         String schema = (String) payload.get("database");
         String tableName = (String) payload.get("table");
         Map<String,Object> recordPayload = (Map<String, Object>) payload.get("data");
+
+        try {
+            long getDataTimeMillis = System.currentTimeMillis();
+            String modify_time = (String) recordPayload.get("modify_time");
+            long modifyTimeMillis;
+            modifyTimeMillis = TimeUtil.stringToLong(modify_time, "yy-MM-dd HH:mm:ss.SSS");
+            long diffMillis = getDataTimeMillis - modifyTimeMillis - 28800000;
+            timeLog.info("" + tableName + " " + diffMillis);
+        }catch (ParseException e){
+            errorLog.error(ExceptionUtils.getFullStackTrace(e));
+        }
+
         SchemaTable schemaTable = new SchemaTable(schema,tableName);
         TableMeta tableMeta = mysqlContext.getTableMetas().get(schemaTable);
         int splitColumnValue = fourSplitValue(String.valueOf(recordPayload.get(tableMeta.getExtKey())));
