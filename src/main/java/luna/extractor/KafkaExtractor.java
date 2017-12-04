@@ -77,22 +77,6 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
         purge.start();
     }
 
-    public class Purge implements Runnable{
-        @Override
-        public void run() {
-            while (delayQueue!=null){
-                try{
-                    Purgatory purgatory=delayQueue.take();
-                    ConsumerLoop consumer = new ConsumerLoop(kafkaContext.getProps(),purgatory.getTopics());
-                    consumers.add(consumer);
-                    executor.submit(consumer);
-                }catch (InterruptedException e){
-                    errorLog.error(ExceptionUtils.getFullStackTrace(e));
-                }
-            }
-        }
-    }
-
     public class ConsumerLoop implements Runnable {
         private AtomicBoolean running = new AtomicBoolean(true);
         private final KafkaConsumer<String, String> consumer;
@@ -195,6 +179,22 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
             }
 
             return false;
+        }
+    }
+
+    public class Purge implements Runnable{
+        @Override
+        public void run() {
+            while (delayQueue!=null){
+                try{
+                    Purgatory purgatory=delayQueue.take();
+                    ConsumerLoop consumer = new ConsumerLoop(kafkaContext.getProps(),purgatory.getTopics());
+                    consumers.add(consumer);
+                    executor.submit(consumer);
+                }catch (InterruptedException e){
+                    errorLog.error(ExceptionUtils.getFullStackTrace(e));
+                }
+            }
         }
     }
 }
