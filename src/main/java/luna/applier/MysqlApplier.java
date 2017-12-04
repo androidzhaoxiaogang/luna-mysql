@@ -71,7 +71,8 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
                 for (ColumnValue cv : cvs) {
                     int index = indexs.get(cv.getColumn().getName());
                     if(index!=-1){
-                        ps.setObject(indexs.get(cv.getColumn().getName()), cv.getValue(), cv.getColumn().getType());
+                        //, cv.getColumn().getType()
+                        ps.setObject(indexs.get(cv.getColumn().getName()), cv.getValue());
                     }
                 }
                 try {

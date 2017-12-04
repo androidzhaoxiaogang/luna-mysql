@@ -52,7 +52,6 @@ public class KafkaRecordTranslator extends AbstractLifeCycle implements Translat
             errorLog.error(ExceptionUtils.getFullStackTrace(e));
         }
         long diffMillis = getDataTimeMillis - modifyTimeMillis - 28800000;
-        timeLog.info("" + tableName + " " + diffMillis);
 
         SchemaTable schemaTable = new SchemaTable(schema,tableName);
         TableMeta tableMeta = mysqlContext.getTableMetas().get(schemaTable);
