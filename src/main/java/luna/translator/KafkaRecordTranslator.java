@@ -42,16 +42,17 @@ public class KafkaRecordTranslator extends AbstractLifeCycle implements Translat
         String tableName = (String) payload.get("table");
         Map<String,Object> recordPayload = (Map<String, Object>) payload.get("data");
 
+
+        long getDataTimeMillis = System.currentTimeMillis();
+        String modify_time = (String) recordPayload.get("modify_time");
+        long modifyTimeMillis = 0;
         try {
-            long getDataTimeMillis = System.currentTimeMillis();
-            String modify_time = (String) recordPayload.get("modify_time");
-            long modifyTimeMillis;
             modifyTimeMillis = TimeUtil.stringToLong(modify_time, "yy-MM-dd HH:mm:ss.SSS");
-            long diffMillis = getDataTimeMillis - modifyTimeMillis - 28800000;
-            timeLog.info("" + tableName + " " + diffMillis);
         }catch (ParseException e){
             errorLog.error(ExceptionUtils.getFullStackTrace(e));
         }
+        long diffMillis = getDataTimeMillis - modifyTimeMillis - 28800000;
+        timeLog.info("" + tableName + " " + diffMillis);
 
         SchemaTable schemaTable = new SchemaTable(schema,tableName);
         TableMeta tableMeta = mysqlContext.getTableMetas().get(schemaTable);
@@ -65,7 +66,10 @@ public class KafkaRecordTranslator extends AbstractLifeCycle implements Translat
             ColumnValue column = new ColumnValue(columnMeta,columnValue);
             record.addColumn(column);
         });
+        long befor = System.currentTimeMillis();
         mysqlApplier.apply(record);
+        long after = System.currentTimeMillis();
+        timeLog.info("" + tableName + " " + diffMillis + " " + (after-befor));
     }
 
     private int fourSplitValue(String value){
