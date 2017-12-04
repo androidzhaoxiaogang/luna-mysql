@@ -16,6 +16,13 @@ public class DataSourceConfig implements Serializable {
     private String            driver;
     private Properties properties       = new Properties();
 
+    public DataSourceConfig(String url, String username, String password, String driver){
+        this.username = username;
+        this.password = password;
+        this.url = url;
+        this.driver = driver;
+    }
+
     public DataSourceConfig(String url, String username, String password, String driver, Properties properties){
         this.username = username;
         this.password = password;
@@ -72,7 +79,6 @@ public class DataSourceConfig implements Serializable {
         result = prime * result + ((password == null) ? 0 : password.hashCode());
         result = prime * result + ((url == null) ? 0 : url.hashCode());
         result = prime * result + ((driver == null) ? 0 : driver.hashCode());
-        result = prime * result + ((properties == null) ? 0 : properties.hashCode());
         return result;
     }
 
@@ -94,9 +100,6 @@ public class DataSourceConfig implements Serializable {
         if (driver == null) {
             if (other.driver != null) return false;
         } else if (!driver.equals(other.driver)) return false;
-        if (properties == null) {
-            if (other.properties != null) return false;
-        } else if (!properties.equals(other.properties)) return false;
         return true;
     }
 

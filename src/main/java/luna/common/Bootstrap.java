@@ -140,6 +140,8 @@ public class Bootstrap extends AbstractLifeCycle{
         logger.info("Source tables: "+mysqlContext.getSourceTables());
         logger.info("Target datasource: "+mysqlContext.getTargetDs());
         logger.info("Source datasource: "+mysqlContext.getSourceDs());
+        DataSourceConfig sourceConfig = new DataSourceConfig(sourceUrl,sourceUsername,sourcePassword,driver);
+        dataSourceFactory.invalidate(sourceConfig);
     }
 
     private DataSource initDataSource(String url, String username, String password, String encode, String poolSize, String driver){

@@ -42,6 +42,10 @@ public class DataSourceFactory extends AbstractLifeCycle{
         logger.info("DataSourceFactory is started!" );
     }
 
+    public void invalidate(DataSourceConfig config){
+        dataSources.invalidate(config);
+        logger.info("Datasource: "+config+"is cleared!");
+    }
 
     public void stop() {
         super.stop();

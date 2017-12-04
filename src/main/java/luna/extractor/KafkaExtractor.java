@@ -103,8 +103,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                                     logger.info(consumerRecord);
                                     Map<String, Object> payload = (Map<String, Object>) JSONValue.parseWithException(consumerRecord.value());
                                     kafkaRecordTranslator.translate(payload);
-                                    //consumer.commitSync();
-                                    //正常break
+                                    //正常退出重试
                                     break;
                                 }catch (Throwable e){
                                     if(processError(e,i)){
