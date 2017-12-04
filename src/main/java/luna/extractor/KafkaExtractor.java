@@ -94,6 +94,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                 ConsumerRecords<String, String> records;
                 while (running.get()) {
                     records = consumer.poll(Long.MAX_VALUE);
+                    long befor = System.currentTimeMillis();
                     for (ConsumerRecord<String, String> consumerRecord : records) {
                         try {
                             //增加重试
@@ -118,6 +119,8 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                             shutdown();
                         }
                     }
+                    long after = System.currentTimeMillis();
+                    timeLog.info(""+(after-befor)+" "+records.count());
                 }
             } catch (WakeupException e) {
                 // ignore for shutdown
