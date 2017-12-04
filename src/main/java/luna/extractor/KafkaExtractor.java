@@ -151,7 +151,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
 
         private void purge(List<String> topics){
             long now = System.currentTimeMillis();
-            long delay = now + TimeUnit.MINUTES.toMillis(10);
+            long delay = now + TimeUnit.MINUTES.toMillis(kafkaContext.getPurgeInterval());
             Purgatory purgatory = new Purgatory(topics,delay,TimeUnit.MILLISECONDS);
             delayQueue.offer(purgatory);
         }

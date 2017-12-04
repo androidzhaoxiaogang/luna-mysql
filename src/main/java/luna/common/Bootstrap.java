@@ -73,6 +73,7 @@ public class Bootstrap extends AbstractLifeCycle{
         int maxPollRecords=(int)inputConfigs.get("max.poll.records");
         int retryTimes =(int)inputConfigs.get("retry.times");
         int retryInterval = (int)inputConfigs.get("retry.interval");
+        int purgeInterval = (int)inputConfigs.get("purge.interval");
 
         Properties props = new Properties();
         props.put("bootstrap.servers", inputConfigs.get("bootstrap.servers"));
@@ -89,6 +90,7 @@ public class Bootstrap extends AbstractLifeCycle{
         kafkaContext.setRetryInterval(retryInterval);
         kafkaContext.setProps(props);
         kafkaContext.setTopics(topics);
+        kafkaContext.setPurgeInterval(purgeInterval);
         logger.info("KafkaContext has inited!");
     }
 
