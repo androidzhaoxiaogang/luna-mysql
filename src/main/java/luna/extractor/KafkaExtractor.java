@@ -103,7 +103,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                                     logger.info(consumerRecord);
                                     Map<String, Object> payload = (Map<String, Object>) JSONValue.parseWithException(consumerRecord.value());
                                     kafkaRecordTranslator.translate(payload);
-                                    consumer.commitSync();
+                                    //consumer.commitSync();
                                     //正常break
                                     break;
                                 }catch (Throwable e){
@@ -119,6 +119,12 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                             shutdown();
                         }
                     }
+                    try {
+                        consumer.commitSync();
+                    }catch (CommitFailedException e){
+                        errorLog.error(ExceptionUtils.getFullStackTrace(e));
+                    }
+
                     long after = System.currentTimeMillis();
                     timeLog.info(""+(after-befor)+" "+records.count());
                 }
