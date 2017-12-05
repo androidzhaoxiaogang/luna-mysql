@@ -1,5 +1,6 @@
 package luna.translator;
 
+import com.google.common.collect.Lists;
 import luna.common.AbstractLifeCycle;
 import luna.common.context.MysqlContext;
 import luna.common.model.meta.ColumnMeta;
@@ -14,6 +15,7 @@ import luna.util.TimeUtil;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
 import java.text.ParseException;
+import java.util.List;
 import java.util.Map;
 
 public class KafkaRecordTranslator extends AbstractLifeCycle implements Translator {
@@ -35,6 +37,30 @@ public class KafkaRecordTranslator extends AbstractLifeCycle implements Translat
         logger.info("KafkaRecordTranslator is stopped!");
     }
 
+    public void translateBatch(List<Map<String,Object>> records){
+        List<Record> myRecords = Lists.newArrayListWithCapacity(records.size());
+        for(Map<String,Object> payload: records){
+            String type = (String) payload.get("type");
+            String schema = (String) payload.get("database");
+            String tableName = (String) payload.get("table");
+            Map<String,Object> recordPayload = (Map<String, Object>) payload.get("data");
+            SchemaTable schemaTable = new SchemaTable(schema,tableName);
+            TableMeta tableMeta = mysqlContext.getTableMetas().get(schemaTable);
+            int splitColumnValue = fourSplitValue(String.valueOf(recordPayload.get(tableMeta.getExtKey())));
+            int targetNum = splitColumnValue%tableMeta.getExtNum();
+            String targetSchema = schema+targetNum;
+            String targetTable = tableName;
+            Record record = new Record(targetSchema,targetTable,tableMeta.getPrimaryKey(),getOpType(type));
+            recordPayload.forEach((columnName,columnValue)->{
+                ColumnMeta columnMeta=tableMeta.getColumnMeta(columnName);
+                ColumnValue column = new ColumnValue(columnMeta,columnValue);
+                record.addColumn(column);
+            });
+            myRecords.add(record);
+        }
+        SchemaTable schemaTable = new SchemaTable(myRecords.get(0).getSchema(),myRecords.get(0).getTable());
+        mysqlApplier.applyBatch(myRecords,schemaTable);
+    }
 
     public void translate(Map<String, Object> payload){
         String type = (String) payload.get("type");

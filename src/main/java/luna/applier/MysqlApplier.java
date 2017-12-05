@@ -52,27 +52,41 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
         logger.info("MysqlApplier is stopped!");
     }
 
-//    public void applyBatch(List<Record> records,SchemaTable schemaTable){
-//        DataSource dataSource = mysqlContext.getTargetDs().get(schemaTable);
-//        doApplyBatch(records,dataSource);
-//
-//    }
-//
-//    private void doApplyBatch(List<Record> records,DataSource dataSource){
-//        Connection conn = null;
-//        try {
-//            conn = dataSource.getConnection();
-//            Statement sm = conn.createStatement();
-//            TableSqlUnit sqlUnit = getSqlUnit(records.get(0));
-//            String applierSql = sqlUnit.applierSql;
-//            Map<String,Integer> indexs = sqlUnit.applierIndex;
-//            for(Record record:records){
-//
-//            }
+    public void applyBatch(List<Record> records,SchemaTable schemaTable){
+        DataSource dataSource = mysqlContext.getTargetDs().get(schemaTable);
+        doApplyBatch(records,dataSource);
+    }
+
+    private void doApplyBatch(List<Record> records,DataSource dataSource){
+        //Connection conn = null;
+        //try {
+            //conn = dataSource.getConnection();
+            //Statement sm = conn.createStatement();
+            TableSqlUnit sqlUnit = getSqlUnit(records.get(0));
+            String applierSql = sqlUnit.applierSql;
+            String sql = applierSql.split("values")[0];
+            Map<String,Integer> indexs = sqlUnit.applierIndex;
+            for(Record record:records){
+                List<ColumnValue> cvs = record.getColumns();
+                ColumnValue[] values= new ColumnValue[cvs.size()];
+                for (ColumnValue cv : cvs) {
+                    int index = indexs.get(cv.getColumn().getName());
+                    if(index!=-1){
+                        values[index-1]=cv;
+                    }
+                }
+                sql = sql + "values (";
+                for(int i=0;i<values.length-1;i++){
+                    sql = sql + values[i].getValue()+", ";
+                }
+                sql = sql + values[values.length-1]+");";
+                logger.info(sql);
+            }
 //        }catch (SQLException e){
 //
 //        }
-//    }
+    }
+
 
     public void apply(Record record){
         DataSource dataSource = mysqlContext.getTargetDs().get(new SchemaTable(record.getSchema(),record.getTable()));

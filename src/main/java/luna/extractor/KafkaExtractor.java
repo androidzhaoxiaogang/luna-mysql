@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import luna.common.*;
 import luna.common.context.KafkaContext;
+import luna.common.model.Record;
 import luna.translator.KafkaRecordTranslator;
 
 import com.google.common.collect.Lists;
@@ -95,6 +96,8 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                 while (running.get()) {
                     records = consumer.poll(Long.MAX_VALUE);
                     long befor = System.currentTimeMillis();
+                    int count = records.count();
+                    List<Map<String,Object>> myRecords = Lists.newArrayListWithCapacity(count);
                     for (ConsumerRecord<String, String> consumerRecord : records) {
                         try {
                             //增加重试
@@ -102,7 +105,8 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                                 try{
                                     logger.info(consumerRecord);
                                     Map<String, Object> payload = (Map<String, Object>) JSONValue.parseWithException(consumerRecord.value());
-                                    kafkaRecordTranslator.translate(payload);
+                                    //kafkaRecordTranslator.translate(payload);
+                                    myRecords.add(payload);
                                     //正常退出重试
                                     break;
                                 }catch (Throwable e){
@@ -118,6 +122,8 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                             shutdown();
                         }
                     }
+
+
                     try {
                         consumer.commitSync();
                     }catch (CommitFailedException e){
