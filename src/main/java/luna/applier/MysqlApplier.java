@@ -1,23 +1,24 @@
 package luna.applier;
 
+import com.google.common.collect.Lists;
 import luna.common.AbstractLifeCycle;
 import luna.common.context.MysqlContext;
 import luna.common.db.sql.SqlTemplates;
+import luna.common.model.OperateType;
 import luna.common.model.meta.ColumnValue;
 import luna.common.model.Record;
 import luna.common.model.SchemaTable;
 import luna.exception.LunaException;
 
 import com.google.common.collect.MapMaker;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.*;
 
 public class MysqlApplier extends AbstractLifeCycle implements Applier{
@@ -52,39 +53,86 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
         logger.info("MysqlApplier is stopped!");
     }
 
+    //默认schemaTable相同
     public void applyBatch(List<Record> records,SchemaTable schemaTable){
         DataSource dataSource = mysqlContext.getTargetDs().get(schemaTable);
-        doApplyBatch(records,dataSource);
+        applyBatch(records,dataSource);
     }
 
-    private void doApplyBatch(List<Record> records,DataSource dataSource){
-        //Connection conn = null;
-        //try {
-            //conn = dataSource.getConnection();
-            //Statement sm = conn.createStatement();
-            TableSqlUnit sqlUnit = getSqlUnit(records.get(0));
-            String applierSql = sqlUnit.applierSql;
-            String sql = applierSql.split("values")[0];
-            Map<String,Integer> indexs = sqlUnit.applierIndex;
-            for(Record record:records){
-                List<ColumnValue> cvs = record.getColumns();
-                ColumnValue[] values= new ColumnValue[cvs.size()];
-                for (ColumnValue cv : cvs) {
-                    int index = indexs.get(cv.getColumn().getName());
-                    if(index!=-1){
-                        values[index-1]=cv;
-                    }
+    private void applyBatch(List<Record> records,DataSource dataSource){
+        if(records.isEmpty()){
+            return;
+        }
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        List<Record> batchRecords = Lists.newArrayList();
+        TableSqlUnit sqlUnit = getSqlUnit(records.get(0));
+        OperateType previous = records.get(0).getOperateType();
+        int previousCounts = 0;
+        for(Record record:records){
+            if(record.getOperateType()==previous){
+                previousCounts++;
+                batchRecords.add(record);
+            }else{
+                if(previousCounts>1){
+                    doApplyBatch(batchRecords,jdbcTemplate,sqlUnit);
+                }else{
+                    applyOneByOne(batchRecords,jdbcTemplate,sqlUnit);
                 }
-                sql = sql + "values (";
-                for(int i=0;i<values.length-1;i++){
-                    sql = sql + values[i].getValue()+", ";
-                }
-                sql = sql + values[values.length-1]+");";
-                logger.info(sql);
+                batchRecords.clear();
+
+                batchRecords.add(record);
+                sqlUnit=getSqlUnit(record);
+                previous=record.getOperateType();
+                previousCounts=1;
             }
-//        }catch (SQLException e){
-//
-//        }
+        }
+    }
+
+    private void applyOneByOne(final List<Record> records,JdbcTemplate jdbcTemplate,TableSqlUnit sqlUnit){
+        for(Record record: records ){
+            applyRecord(record,jdbcTemplate,sqlUnit);
+        }
+    }
+
+    private void doApplyBatch(final List<Record> batchRecords, JdbcTemplate jdbcTemplate,TableSqlUnit sqlUnit) {
+        if(batchRecords.isEmpty()){
+            return;
+        }
+        boolean redoOneByOne = false;
+        try {
+            final Map<String, Integer> indexs = sqlUnit.applierIndex;
+            jdbcTemplate.execute(sqlUnit.applierSql, new PreparedStatementCallback() {
+
+                public Object doInPreparedStatement(PreparedStatement ps) throws SQLException, DataAccessException {
+                    for (Record record : batchRecords) {
+                        // 先加字段，后加主键
+                        List<ColumnValue> cvs = record.getColumns();
+                        for (ColumnValue cv : cvs) {
+                            int index = indexs.get(cv.getColumn().getName());
+                            if(index!=-1){
+                                //, cv.getColumn().getType()
+                                ps.setObject(index, cv.getValue());
+                            }
+                        }
+                        ps.addBatch();
+                    }
+                    ps.executeBatch();
+                    return null;
+                }
+            });
+        } catch (Exception e) {
+            // catch the biggest exception,no matter how, rollback it;
+            errorLog.error("Batch Error: "+ ExceptionUtils.getFullStackTrace(e));
+            redoOneByOne = true;
+            //conn.rollback();
+        }
+
+        // batch cannot pass the duplicate entry exception,so
+        // if executeBatch throw exception,rollback it, and
+        // redo it one by one
+        if (redoOneByOne) {
+            applyOneByOne(batchRecords,jdbcTemplate,sqlUnit);
+        }
     }
 
 
@@ -95,24 +143,24 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
 
     public void apply(Record record, DataSource dataSource){
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        applyRecord(record, jdbcTemplate);
+        TableSqlUnit sqlUnit = getSqlUnit(record);
+        applyRecord(record, jdbcTemplate,sqlUnit);
 
     }
 
-    private void applyRecord(Record record,JdbcTemplate jdbcTemplate){
-        TableSqlUnit sqlUnit = getSqlUnit(record);
+    private void applyRecord(Record record,JdbcTemplate jdbcTemplate,TableSqlUnit sqlUnit){
         String applierSql = sqlUnit.applierSql;
-        Map<String,Integer> indexs = sqlUnit.applierIndex;
+        Map<String,Integer> indexes = sqlUnit.applierIndex;
         logger.info(applierSql);
         jdbcTemplate.execute(applierSql, new PreparedStatementCallback() {
 
             public Object doInPreparedStatement(PreparedStatement ps) throws SQLException, DataAccessException {
                 List<ColumnValue> cvs = record.getColumns();
                 for (ColumnValue cv : cvs) {
-                    int index = indexs.get(cv.getColumn().getName());
+                    int index = indexes.get(cv.getColumn().getName());
                     if(index!=-1){
                         //, cv.getColumn().getType()
-                        ps.setObject(indexs.get(cv.getColumn().getName()), cv.getValue());
+                        ps.setObject(index, cv.getValue());
                     }
                 }
                 logger.info(cvs);

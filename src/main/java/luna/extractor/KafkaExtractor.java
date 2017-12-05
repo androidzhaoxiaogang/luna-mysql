@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import luna.common.*;
 import luna.common.context.KafkaContext;
-import luna.common.model.Record;
 import luna.translator.KafkaRecordTranslator;
 
 import com.google.common.collect.Lists;
@@ -95,43 +94,15 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                 ConsumerRecords<String, String> records;
                 while (running.get()) {
                     records = consumer.poll(Long.MAX_VALUE);
-                    long befor = System.currentTimeMillis();
-                    int count = records.count();
-                    List<Map<String,Object>> myRecords = Lists.newArrayListWithCapacity(count);
-                    for (ConsumerRecord<String, String> consumerRecord : records) {
-                        try {
-                            //增加重试
-                            for(int i=0; i<kafkaContext.getRetryTimes(); i++){
-                                try{
-                                    logger.info(consumerRecord);
-                                    Map<String, Object> payload = (Map<String, Object>) JSONValue.parseWithException(consumerRecord.value());
-                                    //kafkaRecordTranslator.translate(payload);
-                                    myRecords.add(payload);
-                                    //正常退出重试
-                                    break;
-                                }catch (Throwable e){
-                                    if(processError(e,i)){
-                                        //InterruptedException或者重试次数满了: break
-                                        throw e;
-                                    }
-                                }
-                            }
-                        }catch (Throwable e){
-                            DingDingMsgUtil.sendMsg(ExceptionUtils.getFullStackTrace(e));
-                            errorLog.error("ERROR can not handle by retry: "+ExceptionUtils.getFullStackTrace(e));
-                            shutdown();
-                        }
+                    long before = System.currentTimeMillis();
+                    if(records.count()>20){
+                        consumeBatch(records);
+                    }else {
+                        consumeOneByOne(records);
                     }
-
-
-                    try {
-                        consumer.commitSync();
-                    }catch (CommitFailedException e){
-                        errorLog.error(ExceptionUtils.getFullStackTrace(e));
-                    }
-
+                    consumerCommit();
                     long after = System.currentTimeMillis();
-                    timeLog.info(""+(after-befor)+" "+records.count());
+                    timeLog.info(""+(after-before)+" "+records.count());
                 }
             } catch (WakeupException e) {
                 // ignore for shutdown
@@ -145,6 +116,56 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
 
         public void shutdown() {
             consumer.wakeup();
+        }
+
+        private void consumerCommit(){
+            try {
+                consumer.commitSync();
+            }catch (CommitFailedException e){
+                errorLog.error(ExceptionUtils.getFullStackTrace(e));
+            }
+        }
+
+        private void consumeBatch(final ConsumerRecords<String, String> records){
+            try {
+                List<Map<String,Object>> myRecords = Lists.newArrayListWithCapacity(records.count());
+                for (ConsumerRecord<String, String> consumerRecord : records) {
+                    logger.info(consumerRecord);
+                    Map<String, Object> payload = (Map<String, Object>) JSONValue.parseWithException(consumerRecord.value());
+                    myRecords.add(payload);
+                }
+                kafkaRecordTranslator.translateBatch(myRecords);
+            }catch (Throwable e){
+                DingDingMsgUtil.sendMsg(ExceptionUtils.getFullStackTrace(e));
+                errorLog.error("Batch consumer fall failed, try to consumer one by one: "+ExceptionUtils.getFullStackTrace(e));
+                consumeOneByOne(records);
+            }
+        }
+
+        private void consumeOneByOne(final ConsumerRecords<String, String> records){
+            for (ConsumerRecord<String, String> consumerRecord : records) {
+                try {
+                    //增加重试
+                    for(int i=0; i<kafkaContext.getRetryTimes(); i++){
+                        try{
+                            logger.info(consumerRecord);
+                            Map<String, Object> payload = (Map<String, Object>) JSONValue.parseWithException(consumerRecord.value());
+                            kafkaRecordTranslator.translate(payload);
+                            //正常退出重试
+                            break;
+                        }catch (Throwable e){
+                            if(processError(e,i)){
+                                //InterruptedException或者重试次数满了: break
+                                throw e;
+                            }
+                        }
+                    }
+                }catch (Throwable e){
+                    DingDingMsgUtil.sendMsg(ExceptionUtils.getFullStackTrace(e));
+                    errorLog.error("ERROR can not handle by retry: "+ExceptionUtils.getFullStackTrace(e));
+                    shutdown();
+                }
+            }
         }
 
         private void purge(List<String> topics){
