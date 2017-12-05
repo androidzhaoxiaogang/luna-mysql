@@ -51,17 +51,6 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
         logger.info("MysqlApplier is stopped!");
     }
 
-    public void applyBatch(List<Record> records,DataSource dataSource){
-        try {
-            Connection conn = dataSource.getConnection();
-
-        }catch (SQLException e){
-
-        }
-
-    }
-
-
     public void apply(Record record){
         DataSource dataSource = mysqlContext.getTargetDs().get(new SchemaTable(record.getSchema(),record.getTable()));
         apply(record,dataSource);
