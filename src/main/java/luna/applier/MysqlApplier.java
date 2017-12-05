@@ -86,6 +86,14 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
                 previousCounts=1;
             }
         }
+
+        if(!batchRecords.isEmpty()){
+            if(previousCounts>1){
+                doApplyBatch(batchRecords,jdbcTemplate,sqlUnit);
+            }else{
+                applyOneByOne(batchRecords,jdbcTemplate,sqlUnit);
+            }
+        }
     }
 
     private void applyOneByOne(final List<Record> records,JdbcTemplate jdbcTemplate,TableSqlUnit sqlUnit){
