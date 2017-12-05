@@ -17,6 +17,7 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.*;
 
 public class MysqlApplier extends AbstractLifeCycle implements Applier{
@@ -51,6 +52,28 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
         logger.info("MysqlApplier is stopped!");
     }
 
+//    public void applyBatch(List<Record> records,SchemaTable schemaTable){
+//        DataSource dataSource = mysqlContext.getTargetDs().get(schemaTable);
+//        doApplyBatch(records,dataSource);
+//
+//    }
+//
+//    private void doApplyBatch(List<Record> records,DataSource dataSource){
+//        Connection conn = null;
+//        try {
+//            conn = dataSource.getConnection();
+//            Statement sm = conn.createStatement();
+//            TableSqlUnit sqlUnit = getSqlUnit(records.get(0));
+//            String applierSql = sqlUnit.applierSql;
+//            Map<String,Integer> indexs = sqlUnit.applierIndex;
+//            for(Record record:records){
+//
+//            }
+//        }catch (SQLException e){
+//
+//        }
+//    }
+
     public void apply(Record record){
         DataSource dataSource = mysqlContext.getTargetDs().get(new SchemaTable(record.getSchema(),record.getTable()));
         apply(record,dataSource);
@@ -66,6 +89,7 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
         TableSqlUnit sqlUnit = getSqlUnit(record);
         String applierSql = sqlUnit.applierSql;
         Map<String,Integer> indexs = sqlUnit.applierIndex;
+        logger.info(applierSql);
         jdbcTemplate.execute(applierSql, new PreparedStatementCallback() {
 
             public Object doInPreparedStatement(PreparedStatement ps) throws SQLException, DataAccessException {
