@@ -14,6 +14,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.*;
@@ -50,6 +51,17 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
         logger.info("MysqlApplier is stopped!");
     }
 
+    public void applyBatch(List<Record> records,DataSource dataSource){
+        try {
+            Connection conn = dataSource.getConnection();
+
+        }catch (SQLException e){
+
+        }
+
+    }
+
+
     public void apply(Record record){
         DataSource dataSource = mysqlContext.getTargetDs().get(new SchemaTable(record.getSchema(),record.getTable()));
         apply(record,dataSource);
@@ -58,6 +70,7 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
     public void apply(Record record, DataSource dataSource){
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         applyRecord(record, jdbcTemplate);
+
     }
 
     private void applyRecord(Record record,JdbcTemplate jdbcTemplate){
@@ -75,6 +88,7 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
                         ps.setObject(indexs.get(cv.getColumn().getName()), cv.getValue());
                     }
                 }
+                logger.info(cvs);
                 try {
                     ps.execute();
                 } catch (SQLException e) {
