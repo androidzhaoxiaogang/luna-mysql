@@ -27,8 +27,7 @@ public class Bootstrap extends AbstractLifeCycle{
     private MysqlContext            mysqlContext = new MysqlContext();
     private final Map               inputConfigs;
     private final Map               mysqlConfigs;
-
-    private DataSourceFactory dataSourceFactory = new DataSourceFactory();
+    private DataSourceFactory       dataSourceFactory = new DataSourceFactory();
 
 
     public Bootstrap(String configFile){
@@ -47,7 +46,7 @@ public class Bootstrap extends AbstractLifeCycle{
         dataSourceFactory.start();
         initKafkaContext();
         initMysqlContext();
-        mysqlApplier = new MysqlApplier(mysqlContext);
+        mysqlApplier = new MysqlApplier(mysqlContext,dataSourceFactory);
         mysqlApplier.start();
         kafkaRecordTranslator = new KafkaRecordTranslator(mysqlContext,mysqlApplier);
         kafkaRecordTranslator.start();
@@ -102,7 +101,8 @@ public class Bootstrap extends AbstractLifeCycle{
         String sourceUsername = (String)mysqlConfigs.get("source.username");
         String sourcePassword = (String)mysqlConfigs.get("source.password");
 
-        mysqlContext.setSourceDs(initDataSource(sourceUrl,sourceUsername,sourcePassword,sourceEncode,sourcePoolSize,driver));
+        mysqlContext.setSourceDsConfig(initDataSourceConfig(sourceUrl,sourceUsername,sourcePassword,sourceEncode,sourcePoolSize,driver));
+
         List<Map> splitTableDetail=(List<Map>)mysqlConfigs.get("split.table.detail");
         for (Map map : splitTableDetail) {
             String schema = (String)map.get("schema");
@@ -114,7 +114,7 @@ public class Bootstrap extends AbstractLifeCycle{
                 throw new LunaException("ERROR: Split number is not a BLOB");
             }
             mysqlContext.addSourceTable(schemaTable);
-            TableMeta tableMeta = TableMetaGenerator.buildColumns(mysqlContext.getSourceDs(),schema,table);
+            TableMeta tableMeta = TableMetaGenerator.buildColumns(dataSourceFactory.getDataSource(mysqlContext.getSourceDsConfig()),schema,table);
             tableMeta.setExtKey(splitColumn);
             tableMeta.setExtNum(splitNum);
             mysqlContext.putTableMeta(schemaTable,tableMeta);
@@ -130,21 +130,21 @@ public class Bootstrap extends AbstractLifeCycle{
                 String password = (String)targets.get(i).get("password");
                 String targetSchema = schema+i;
                 String targetTable = table;
-                DataSource dataSource = initDataSource(url,username,password,encode,poolSize,driver);
-                mysqlContext.putTargetDs(new SchemaTable(targetSchema,targetTable),dataSource);
+
+                DataSourceConfig dsConfig = initDataSourceConfig(url,username,password,encode,poolSize,driver);
+                mysqlContext.putTargetDsConfig(new SchemaTable(targetSchema,targetTable),dsConfig);
             }
 
         }
         logger.info("MysqlContext has inited!");
         logger.info("Target table meta: "+mysqlContext.getTableMetas());
         logger.info("Source tables: "+mysqlContext.getSourceTables());
-        logger.info("Target datasource: "+mysqlContext.getTargetDs());
-        logger.info("Source datasource: "+mysqlContext.getSourceDs());
-        DataSourceConfig sourceConfig = new DataSourceConfig(sourceUrl,sourceUsername,sourcePassword,driver);
-        dataSourceFactory.invalidate(sourceConfig);
+        logger.info("Target datasource: "+mysqlContext.getTargetDsConfigs());
+        logger.info("Source datasource: "+mysqlContext.getSourceDsConfig());
+        dataSourceFactory.invalidate(mysqlContext.getSourceDsConfig());
     }
 
-    private DataSource initDataSource(String url, String username, String password, String encode, String poolSize, String driver){
+    private DataSourceConfig initDataSourceConfig(String url, String username, String password, String encode, String poolSize, String driver){
         Properties properties = new Properties();
         if (poolSize != null) {
             properties.setProperty("maxActive", poolSize);
@@ -153,8 +153,8 @@ public class Bootstrap extends AbstractLifeCycle{
         }
 
         properties.setProperty("characterEncoding", encode);
-        DataSourceConfig dsConfig = new DataSourceConfig(url, username, password, driver, properties);
-        return dataSourceFactory.getDataSource(dsConfig);
+        return new DataSourceConfig(url, username, password, driver, properties);
+        //return dataSourceFactory.getDataSource(dsConfig);
     }
 
 

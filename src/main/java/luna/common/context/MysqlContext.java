@@ -1,6 +1,7 @@
 package luna.common.context;
 
 import com.google.common.collect.Lists;
+import luna.common.db.DataSourceConfig;
 import luna.common.model.SchemaTable;
 import luna.common.model.meta.TableMeta;
 
@@ -13,8 +14,8 @@ import java.util.Map;
 public class MysqlContext implements Serializable{
     private static final long serialVersionUID = 4660863593558723238L;
 
-    private DataSource                          sourceDs;
-    private Map<SchemaTable,DataSource>         targetDs = new HashMap<>();
+    private DataSourceConfig                    sourceDsConfig;
+    private Map<SchemaTable,DataSourceConfig>   targetDsConfigs = new HashMap<>();
     private List<SchemaTable>                   sourceTables = Lists.newArrayList();
     private Map<SchemaTable,TableMeta>          tableMetas = new HashMap<>();
 
@@ -30,12 +31,12 @@ public class MysqlContext implements Serializable{
         this.tableMetas.put(schemaTable,tableMetas);
     }
 
-    public DataSource getSourceDs() {
-        return sourceDs;
+    public DataSourceConfig getSourceDsConfig() {
+        return sourceDsConfig;
     }
 
-    public void setSourceDs(DataSource sourceDs) {
-        this.sourceDs = sourceDs;
+    public void setSourceDsConfig(DataSourceConfig sourceDsConfig) {
+        this.sourceDsConfig = sourceDsConfig;
     }
 
     public List<SchemaTable> getSourceTables() {
@@ -50,16 +51,16 @@ public class MysqlContext implements Serializable{
         this.sourceTables.add(sourceTable);
     }
 
-    public Map<SchemaTable, DataSource> getTargetDs() {
-        return targetDs;
+    public Map<SchemaTable, DataSourceConfig> getTargetDsConfigs() {
+        return targetDsConfigs;
     }
 
-    public void setTargetDs(Map<SchemaTable, DataSource> targetDs) {
-        this.targetDs = targetDs;
+    public void setTargetDsConfigs(Map<SchemaTable, DataSourceConfig> targetDsConfigs) {
+        this.targetDsConfigs = targetDsConfigs;
     }
 
-    public void putTargetDs(SchemaTable schemaTable, DataSource targetDs) {
-        this.targetDs.put(schemaTable,targetDs);
+    public void putTargetDsConfig(SchemaTable schemaTable, DataSourceConfig dsConfig) {
+        this.targetDsConfigs.put(schemaTable,dsConfig);
     }
 
 }

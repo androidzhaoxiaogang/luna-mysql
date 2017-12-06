@@ -3,6 +3,8 @@ package luna.applier;
 import com.google.common.collect.Lists;
 import luna.common.AbstractLifeCycle;
 import luna.common.context.MysqlContext;
+import luna.common.db.DataSourceConfig;
+import luna.common.db.DataSourceFactory;
 import luna.common.db.sql.SqlTemplates;
 import luna.common.model.OperateType;
 import luna.common.model.meta.ColumnValue;
@@ -27,9 +29,11 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
     private Map<SchemaTable, TableSqlUnit>      deleteSqlCache;
     private MysqlContext                        mysqlContext;
     private MapMaker                            concurrentMapMaker = new MapMaker();
+    private DataSourceFactory                   dsFactory;
 
-    public MysqlApplier(MysqlContext mysqlContext){
+    public MysqlApplier(MysqlContext mysqlContext,DataSourceFactory dsFactory){
         this.mysqlContext=mysqlContext;
+        this.dsFactory=dsFactory;
     }
 
     public static class TableSqlUnit {
@@ -55,7 +59,8 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
 
     //默认schemaTable相同
     public void applyBatch(final List<Record> records,SchemaTable schemaTable){
-        DataSource dataSource = mysqlContext.getTargetDs().get(schemaTable);
+        DataSourceConfig dsConfig = mysqlContext.getTargetDsConfigs().get(schemaTable);
+        DataSource dataSource = dsFactory.getDataSource(dsConfig);
         applyBatch(records,dataSource);
     }
 
@@ -143,7 +148,8 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
 
 
     public void apply(Record record){
-        DataSource dataSource = mysqlContext.getTargetDs().get(new SchemaTable(record.getSchema(),record.getTable()));
+        DataSourceConfig dsConfig = mysqlContext.getTargetDsConfigs().get(new SchemaTable(record.getSchema(),record.getTable()));
+        DataSource dataSource = dsFactory.getDataSource(dsConfig);
         apply(record,dataSource);
     }
 
