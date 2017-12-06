@@ -17,8 +17,6 @@ public class Record implements Serializable{
     private OperateType         operateType;
     private List<ColumnValue>   columns = Lists.newArrayList();
 
-    public Record(){}
-
     public Record(String schema, String table,String primaryKey,OperateType operateType){
         this.schema=schema;
         this.table=table;

@@ -54,12 +54,12 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
     }
 
     //默认schemaTable相同
-    public void applyBatch(List<Record> records,SchemaTable schemaTable){
+    public void applyBatch(final List<Record> records,SchemaTable schemaTable){
         DataSource dataSource = mysqlContext.getTargetDs().get(schemaTable);
         applyBatch(records,dataSource);
     }
 
-    private void applyBatch(List<Record> records,DataSource dataSource){
+    private void applyBatch(final List<Record> records,DataSource dataSource){
         if(records.isEmpty()){
             return;
         }
@@ -113,7 +113,6 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
 
                 public Object doInPreparedStatement(PreparedStatement ps) throws SQLException, DataAccessException {
                     for (Record record : batchRecords) {
-                        // 先加字段，后加主键
                         List<ColumnValue> cvs = record.getColumns();
                         for (ColumnValue cv : cvs) {
                             int index = indexs.get(cv.getColumn().getName());
@@ -132,7 +131,6 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
             // catch the biggest exception,no matter how, rollback it;
             errorLog.error("Batch Error: "+ ExceptionUtils.getFullStackTrace(e));
             redoOneByOne = true;
-            //conn.rollback();
         }
 
         // batch cannot pass the duplicate entry exception,so

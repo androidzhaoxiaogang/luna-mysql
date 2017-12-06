@@ -39,7 +39,7 @@ public class KafkaRecordTranslator extends AbstractLifeCycle implements Translat
     }
 
 
-    public void translateBatch(List<Map<String,Object>> records){
+    public void translate(final List<Map<String,Object>> records){
         Map<SchemaTable,List<Record>> recordsBucket = new HashMap<>();
         for(Map<String,Object> payload: records){
             Record record=translateToRecord(payload);
@@ -58,13 +58,9 @@ public class KafkaRecordTranslator extends AbstractLifeCycle implements Translat
         }));
         long after = System.currentTimeMillis();
         timeLog.info("batch "+(after-before)+" "+records.size());
-
-
-
-
     }
 
-    public void translate(Map<String, Object> payload){
+    public void translateOneByOne(Map<String, Object> payload){
         Record record=translateToRecord(payload);
         String tableName = (String) payload.get("table");
         long before = System.currentTimeMillis();
@@ -78,11 +74,11 @@ public class KafkaRecordTranslator extends AbstractLifeCycle implements Translat
         String schema = (String) payload.get("database");
         String tableName = (String) payload.get("table");
         Map<String,Object> recordPayload = (Map<String, Object>) payload.get("data");
-        SchemaTable schemaTable = new SchemaTable(schema,tableName);
-        TableMeta tableMeta = mysqlContext.getTableMetas().get(schemaTable);
+
+        TableMeta tableMeta = mysqlContext.getTableMetas().get(new SchemaTable(schema,tableName));
         int splitColumnValue = fourSplitValue(String.valueOf(recordPayload.get(tableMeta.getExtKey())));
         int targetNum = splitColumnValue%tableMeta.getExtNum();
-        String targetSchema = schema+targetNum;
+        String targetSchema = schema+String.valueOf(targetNum);
         String targetTable = tableName;
         Record record = new Record(targetSchema,targetTable,tableMeta.getPrimaryKey(),getOpType(type));
         recordPayload.forEach((columnName,columnValue)->{
@@ -90,7 +86,6 @@ public class KafkaRecordTranslator extends AbstractLifeCycle implements Translat
             ColumnValue column = new ColumnValue(columnMeta,columnValue);
             record.addColumn(column);
         });
-
 
         String modify_time = (String) recordPayload.get("modify_time");
         long modifyTimeMillis = 0;

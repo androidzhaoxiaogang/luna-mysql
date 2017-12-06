@@ -89,28 +89,20 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
 
         public void run() {
             try {
-                monitorRebalance();
-                logger.info("Thread-"+Thread.currentThread().getId()+" Get kafka client!");
-                ConsumerRecords<String, String> records;
+                subscribeAndMonitor();
+                ConsumerRecords<String, String> consumerRecords;
                 while (running.get()) {
-                    records = consumer.poll(Long.MAX_VALUE);
-                    //long before = System.currentTimeMillis();
-                    if(records.count()>0){
-                        consumeBatch(records);
-                    }else {
-                        consumeOneByOne(records);
-                    }
-                    consumerCommit();
-                    //long after = System.currentTimeMillis();
-                    //timeLog.info(""+(after-before)+" "+records.count());
+                    consumerRecords = consumer.poll(Long.MAX_VALUE);
+                    consume(consumerRecords);
+                    commitOffset();
                 }
             } catch (WakeupException e) {
-                // ignore for shutdown
+                //shutdown
+                running.set(false);
             } finally {
                 consumer.close();
                 errorLog.error("Consumer Thread "+ Thread.currentThread().getId() + "is closed!");
                 purge(topics);
-                errorLog.error("Put this topic into purgatory.");
             }
         }
 
@@ -118,39 +110,42 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
             consumer.wakeup();
         }
 
-        private void consumerCommit(){
-            try {
-                consumer.commitSync();
-            }catch (CommitFailedException e){
-                errorLog.error(ExceptionUtils.getFullStackTrace(e));
+        private void commitOffset(){
+            for(int i=0;i<3;i++) {
+                try {
+                    consumer.commitSync();
+                    break;
+                } catch (CommitFailedException e) {
+                    errorLog.error("Commit offset after "+i+" times retry "+ExceptionUtils.getFullStackTrace(e));
+                }
             }
         }
 
-        private void consumeBatch(final ConsumerRecords<String, String> records){
+        private void consume(final ConsumerRecords<String, String> consumerRecords){
             try {
-                List<Map<String,Object>> myRecords = Lists.newArrayListWithCapacity(records.count());
-                for (ConsumerRecord<String, String> consumerRecord : records) {
+                List<Map<String,Object>> records = Lists.newArrayListWithCapacity(consumerRecords.count());
+                for (ConsumerRecord<String, String> consumerRecord : consumerRecords) {
                     logger.info(consumerRecord);
                     Map<String, Object> payload = (Map<String, Object>) JSONValue.parseWithException(consumerRecord.value());
-                    myRecords.add(payload);
+                    records.add(payload);
                 }
-                kafkaRecordTranslator.translateBatch(myRecords);
+                kafkaRecordTranslator.translate(records);
             }catch (Throwable e){
                 DingDingMsgUtil.sendMsg(ExceptionUtils.getFullStackTrace(e));
                 errorLog.error("Batch consumer fall failed, try to consumer one by one: "+ExceptionUtils.getFullStackTrace(e));
-                consumeOneByOne(records);
+                consumeOneByOne(consumerRecords);
             }
         }
 
-        private void consumeOneByOne(final ConsumerRecords<String, String> records){
-            for (ConsumerRecord<String, String> consumerRecord : records) {
+        private void consumeOneByOne(final ConsumerRecords<String, String> consumerRecords){
+            for (ConsumerRecord<String, String> consumerRecord : consumerRecords) {
                 try {
                     //增加重试
                     for(int i=0; i<kafkaContext.getRetryTimes(); i++){
                         try{
                             logger.info(consumerRecord);
                             Map<String, Object> payload = (Map<String, Object>) JSONValue.parseWithException(consumerRecord.value());
-                            kafkaRecordTranslator.translate(payload);
+                            kafkaRecordTranslator.translateOneByOne(payload);
                             //正常退出重试
                             break;
                         }catch (Throwable e){
@@ -173,9 +168,10 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
             long delay = now + TimeUnit.MINUTES.toMillis(kafkaContext.getPurgeInterval());
             Purgatory purgatory = new Purgatory(topics,delay,TimeUnit.MILLISECONDS);
             delayQueue.offer(purgatory);
+            errorLog.error("Put this topic into purgatory.");
         }
 
-        private void monitorRebalance(){
+        private void subscribeAndMonitor(){
             consumer.subscribe(topics,new ConsumerRebalanceListener() {
                 public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
                 }
@@ -186,6 +182,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                     });
                 }
             });
+            logger.info("Thread-"+Thread.currentThread().getId()+" Get kafka client!");
         }
 
         private boolean processError(Throwable e, int i){
