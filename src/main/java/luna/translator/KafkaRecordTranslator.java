@@ -40,9 +40,6 @@ public class KafkaRecordTranslator extends AbstractLifeCycle implements Translat
 
 
     public void translateBatch(List<Map<String,Object>> records){
-        if(records.isEmpty()){
-            return;
-        }
         Map<SchemaTable,List<Record>> recordsBucket = new HashMap<>();
         for(Map<String,Object> payload: records){
             Record record=translateToRecord(payload);
@@ -55,26 +52,25 @@ public class KafkaRecordTranslator extends AbstractLifeCycle implements Translat
                 recordsBucket.get(schemaTable).add(record);
             }
         }
+        long before = System.currentTimeMillis();
         recordsBucket.forEach(((schemaTable, myRecords) -> {
             mysqlApplier.applyBatch(myRecords,schemaTable);
         }));
+        long after = System.currentTimeMillis();
+        timeLog.info("batch "+(after-before)+" "+records.size());
+
+
+
+
     }
 
     public void translate(Map<String, Object> payload){
         Record record=translateToRecord(payload);
         String tableName = (String) payload.get("table");
-        Map<String,Object> recordPayload = (Map<String, Object>) payload.get("data");
-        String modify_time = (String) recordPayload.get("modify_time");
-        long modifyTimeMillis = 0;
-        try {
-            modifyTimeMillis = TimeUtil.stringToLong(modify_time, "yy-MM-dd HH:mm:ss.SSS");
-        }catch (ParseException e){
-            errorLog.error(ExceptionUtils.getFullStackTrace(e));
-        }
         long before = System.currentTimeMillis();
         mysqlApplier.apply(record);
         long after = System.currentTimeMillis();
-        timeLog.info("" + tableName + " " + (after-modifyTimeMillis) + " " + (after-before));
+        timeLog.info(tableName+" " + after + " " + (after-before));
     }
 
     private Record translateToRecord(Map<String, Object> payload){
@@ -94,6 +90,17 @@ public class KafkaRecordTranslator extends AbstractLifeCycle implements Translat
             ColumnValue column = new ColumnValue(columnMeta,columnValue);
             record.addColumn(column);
         });
+
+
+        String modify_time = (String) recordPayload.get("modify_time");
+        long modifyTimeMillis = 0;
+        try {
+            modifyTimeMillis = TimeUtil.stringToLong(modify_time, "yy-MM-dd HH:mm:ss.SSS");
+        }catch (ParseException e){
+            errorLog.error(ExceptionUtils.getFullStackTrace(e));
+        }
+        long now = System.currentTimeMillis();
+        timeLog.info(tableName+" "+(now-modifyTimeMillis));
         return record;
     }
 

@@ -94,15 +94,15 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                 ConsumerRecords<String, String> records;
                 while (running.get()) {
                     records = consumer.poll(Long.MAX_VALUE);
-                    long before = System.currentTimeMillis();
-                    if(records.count()>20){
+                    //long before = System.currentTimeMillis();
+                    if(records.count()>0){
                         consumeBatch(records);
                     }else {
                         consumeOneByOne(records);
                     }
                     consumerCommit();
-                    long after = System.currentTimeMillis();
-                    timeLog.info(""+(after-before)+" "+records.count());
+                    //long after = System.currentTimeMillis();
+                    //timeLog.info(""+(after-before)+" "+records.count());
                 }
             } catch (WakeupException e) {
                 // ignore for shutdown
