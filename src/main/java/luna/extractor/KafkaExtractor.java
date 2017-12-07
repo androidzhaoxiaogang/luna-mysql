@@ -93,7 +93,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                 ConsumerRecords<String, String> consumerRecords;
                 while (running.get()) {
                     consumerRecords = consumer.poll(Long.MAX_VALUE);
-                    //consume(consumerRecords);
+                    consume(consumerRecords);
                     commitOffset();
                 }
             } catch (WakeupException e) {
