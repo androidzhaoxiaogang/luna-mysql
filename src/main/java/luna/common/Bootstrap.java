@@ -132,6 +132,7 @@ public class Bootstrap extends AbstractLifeCycle{
                 String targetTable = table;
 
                 DataSourceConfig dsConfig = initDataSourceConfig(url,username,password,encode,poolSize,driver);
+                dataSourceFactory.loading(dsConfig);
                 mysqlContext.putTargetDsConfig(new SchemaTable(targetSchema,targetTable),dsConfig);
             }
 

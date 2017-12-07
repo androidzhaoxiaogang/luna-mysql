@@ -57,8 +57,8 @@ public class DataSourceFactory extends AbstractLifeCycle{
         return dataSources.getUnchecked(config);
     }
 
-    public DataSource getDataSource(String url, String userName, String password, String driver, Properties props) {
-        return getDataSource(new DataSourceConfig(url, userName, password, driver, props));
+    public void loading(DataSourceConfig config){
+        dataSources.refresh(config);
     }
 
     private DataSource createDataSource(String url, String userName, String password, String driver, Properties props) {
