@@ -87,15 +87,15 @@ public class KafkaRecordTranslator extends AbstractLifeCycle implements Translat
             record.addColumn(column);
         });
 
-//        String modify_time = (String) recordPayload.get("modify_time");
-//        long modifyTimeMillis = 0;
-//        try {
-//            modifyTimeMillis = TimeUtil.stringToLong(modify_time, "yy-MM-dd HH:mm:ss.SSS");
-//        }catch (ParseException e){
-//            errorLog.error(ExceptionUtils.getFullStackTrace(e));
-//        }
-//        long now = System.currentTimeMillis();
-//        timeLog.info(tableName+" "+(now-modifyTimeMillis));
+        String modify_time = (String) recordPayload.get("modify_time");
+        long modifyTimeMillis = 0;
+        try {
+            modifyTimeMillis = TimeUtil.stringToLong(modify_time, "yy-MM-dd HH:mm:ss.SSS");
+        }catch (ParseException e){
+            errorLog.error(ExceptionUtils.getFullStackTrace(e));
+        }
+        long now = System.currentTimeMillis();
+        timeLog.info(tableName+" "+(now-modifyTimeMillis));
         return record;
     }
 
