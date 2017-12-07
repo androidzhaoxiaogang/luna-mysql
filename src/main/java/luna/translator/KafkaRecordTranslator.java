@@ -82,9 +82,11 @@ public class KafkaRecordTranslator extends AbstractLifeCycle implements Translat
         String targetTable = tableName;
         Record record = new Record(targetSchema,targetTable,tableMeta.getPrimaryKey(),getOpType(type));
         recordPayload.forEach((columnName,columnValue)->{
-            ColumnMeta columnMeta=tableMeta.getColumnMeta(columnName);
-            ColumnValue column = new ColumnValue(columnMeta,columnValue);
-            record.addColumn(column);
+            if(columnValue!=null){
+                ColumnMeta columnMeta=tableMeta.getColumnMeta(columnName);
+                ColumnValue column = new ColumnValue(columnMeta,columnValue);
+                record.addColumn(column);
+            }
         });
 
         String modify_time = (String) recordPayload.get("modify_time");

@@ -123,12 +123,7 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
                             int index = indexs.get(cv.getColumn().getName());
                             if(index!=-1){
                                 //, cv.getColumn().getType()
-                                if(cv.getValue()==null){
-                                    ps.setObject(index,"");
-                                }else{
-                                    ps.setObject(index, cv.getValue());
-                                }
-                                //ps.setObject(index, cv.getValue());
+                                ps.setObject(index, cv.getValue());
                             }
                         }
                         ps.addBatch();
@@ -177,12 +172,7 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
                     int index = indexes.get(cv.getColumn().getName());
                     if(index!=-1){
                         //, cv.getColumn().getType()
-                        if(cv.getValue()==null){
-                            ps.setObject(index,"");
-                        }else{
-                            ps.setObject(index, cv.getValue());
-                        }
-                        //ps.setObject(index, cv.getValue());
+                        ps.setObject(index, cv.getValue());
                     }
                 }
                 logger.info(cvs);
