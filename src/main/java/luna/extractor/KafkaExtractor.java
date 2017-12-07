@@ -94,7 +94,6 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                 while (running.get()) {
                     consumerRecords = consumer.poll(Long.MAX_VALUE);
                     consume(consumerRecords);
-                    commitOffset();
                 }
             } catch (WakeupException e) {
                 //shutdown
@@ -130,6 +129,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                     records.add(payload);
                 }
                 kafkaRecordTranslator.translate(records);
+                commitOffset();
             }catch (Throwable e){
                 DingDingMsgUtil.sendMsg(ExceptionUtils.getFullStackTrace(e));
                 errorLog.error("Batch consumer fall failed, try to consumer one by one: "+ExceptionUtils.getFullStackTrace(e));
@@ -155,6 +155,7 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
                             }
                         }
                     }
+                    commitOffset();
                 }catch (Throwable e){
                     DingDingMsgUtil.sendMsg(ExceptionUtils.getFullStackTrace(e));
                     errorLog.error("ERROR can not handle by retry: "+ExceptionUtils.getFullStackTrace(e));
