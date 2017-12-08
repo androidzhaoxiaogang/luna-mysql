@@ -54,7 +54,7 @@ public class KafkaRecordTranslator extends AbstractLifeCycle implements Translat
         }
         long before = System.currentTimeMillis();
         recordsBucket.forEach(((schemaTable, myRecords) -> {
-            mysqlApplier.applyBatch(myRecords,schemaTable);
+            mysqlApplier.apply(myRecords,schemaTable);
         }));
         long after = System.currentTimeMillis();
         timeLog.info("batch "+(after-before)+" "+records.size());
@@ -64,7 +64,7 @@ public class KafkaRecordTranslator extends AbstractLifeCycle implements Translat
         Record record=translateToRecord(payload);
         String tableName = (String) payload.get("table");
         long before = System.currentTimeMillis();
-        mysqlApplier.apply(record);
+        mysqlApplier.applyOneByOne(record);
         long after = System.currentTimeMillis();
         timeLog.info(tableName+" " + after + " " + (after-before));
     }

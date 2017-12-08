@@ -58,10 +58,18 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
     }
 
     //默认schemaTable相同
-    public void applyBatch(final List<Record> records,SchemaTable schemaTable){
+    public void apply(final List<Record> records,SchemaTable schemaTable){
         DataSourceConfig dsConfig = mysqlContext.getTargetDsConfigs().get(schemaTable);
         DataSource dataSource = dsFactory.getDataSource(dsConfig);
         applyBatch(records,dataSource);
+    }
+
+    public void applyOneByOne(Record record){
+        DataSourceConfig dsConfig = mysqlContext.getTargetDsConfigs().get(new SchemaTable(record.getSchema(),record.getTable()));
+        DataSource dataSource = dsFactory.getDataSource(dsConfig);
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        TableSqlUnit sqlUnit = getSqlUnit(record);
+        applyRecord(record, jdbcTemplate,sqlUnit);
     }
 
     private void applyBatch(final List<Record> records,DataSource dataSource){
@@ -79,9 +87,9 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
                 batchRecords.add(record);
             }else{
                 if(previousCounts>1){
-                    doApplyBatch(batchRecords,jdbcTemplate,sqlUnit);
+                    doApplyRecordsBatch(batchRecords,jdbcTemplate,sqlUnit);
                 }else{
-                    applyOneByOne(batchRecords,jdbcTemplate,sqlUnit);
+                    doApplyRecordsOneByOne(batchRecords,jdbcTemplate,sqlUnit);
                 }
                 batchRecords.clear();
 
@@ -94,20 +102,20 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
 
         if(!batchRecords.isEmpty()){
             if(previousCounts>1){
-                doApplyBatch(batchRecords,jdbcTemplate,sqlUnit);
+                doApplyRecordsOneByOne(batchRecords,jdbcTemplate,sqlUnit);
             }else{
-                applyOneByOne(batchRecords,jdbcTemplate,sqlUnit);
+                doApplyRecordsOneByOne(batchRecords,jdbcTemplate,sqlUnit);
             }
         }
     }
 
-    private void applyOneByOne(final List<Record> records,JdbcTemplate jdbcTemplate,TableSqlUnit sqlUnit){
+    private void doApplyRecordsOneByOne(final List<Record> records,JdbcTemplate jdbcTemplate,TableSqlUnit sqlUnit){
         for(Record record: records ){
             applyRecord(record,jdbcTemplate,sqlUnit);
         }
     }
 
-    private void doApplyBatch(final List<Record> batchRecords, JdbcTemplate jdbcTemplate,TableSqlUnit sqlUnit) {
+    private void doApplyRecordsBatch(final List<Record> batchRecords, JdbcTemplate jdbcTemplate,TableSqlUnit sqlUnit) {
         if(batchRecords.isEmpty()){
             return;
         }
@@ -142,22 +150,8 @@ public class MysqlApplier extends AbstractLifeCycle implements Applier{
         // if executeBatch throw exception,rollback it, and
         // redo it one by one
         if (redoOneByOne) {
-            applyOneByOne(batchRecords,jdbcTemplate,sqlUnit);
+            doApplyRecordsOneByOne(batchRecords,jdbcTemplate,sqlUnit);
         }
-    }
-
-
-    public void apply(Record record){
-        DataSourceConfig dsConfig = mysqlContext.getTargetDsConfigs().get(new SchemaTable(record.getSchema(),record.getTable()));
-        DataSource dataSource = dsFactory.getDataSource(dsConfig);
-        apply(record,dataSource);
-    }
-
-    public void apply(Record record, DataSource dataSource){
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        TableSqlUnit sqlUnit = getSqlUnit(record);
-        applyRecord(record, jdbcTemplate,sqlUnit);
-
     }
 
     private void applyRecord(Record record,JdbcTemplate jdbcTemplate,TableSqlUnit sqlUnit){

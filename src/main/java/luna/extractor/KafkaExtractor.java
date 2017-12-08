@@ -109,15 +109,18 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
             consumer.wakeup();
         }
 
-        private void commitOffset(){
-            for(int i=0;i<3;i++) {
-                try {
-                    consumer.commitSync();
-                    break;
-                } catch (CommitFailedException e) {
-                    errorLog.error("Commit offset after "+i+" times retry "+ExceptionUtils.getFullStackTrace(e));
+        private void subscribeAndMonitor(){
+            consumer.subscribe(topics,new ConsumerRebalanceListener() {
+                public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
                 }
-            }
+
+                public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
+                    partitions.forEach(partition -> {
+                        logger.info("Rebalance happened " + partition.topic() + ":" + partition.partition());
+                    });
+                }
+            });
+            logger.info("Thread-"+Thread.currentThread().getId()+" Get kafka client!");
         }
 
         private void consume(final ConsumerRecords<String, String> consumerRecords){
@@ -164,26 +167,23 @@ public class KafkaExtractor extends AbstractLifeCycle implements Extractor{
             }
         }
 
+        private void commitOffset(){
+            for(int i=0;i<3;i++) {
+                try {
+                    consumer.commitSync();
+                    break;
+                } catch (CommitFailedException e) {
+                    errorLog.error("Commit offset after "+i+" times retry "+ExceptionUtils.getFullStackTrace(e));
+                }
+            }
+        }
+
         private void purge(List<String> topics){
             long now = System.currentTimeMillis();
             long delay = now + TimeUnit.MINUTES.toMillis(kafkaContext.getPurgeInterval());
             Purgatory purgatory = new Purgatory(topics,delay,TimeUnit.MILLISECONDS);
             delayQueue.offer(purgatory);
             errorLog.error("Put this topic into purgatory.");
-        }
-
-        private void subscribeAndMonitor(){
-            consumer.subscribe(topics,new ConsumerRebalanceListener() {
-                public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
-                }
-
-                public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
-                    partitions.forEach(partition -> {
-                        logger.info("Rebalance happened " + partition.topic() + ":" + partition.partition());
-                    });
-                }
-            });
-            logger.info("Thread-"+Thread.currentThread().getId()+" Get kafka client!");
         }
 
         private boolean processError(Throwable e, int i){
